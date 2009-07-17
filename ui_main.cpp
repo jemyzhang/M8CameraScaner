@@ -17,16 +17,12 @@ Ui_MainWnd::~Ui_MainWnd(){
         delete m_pCapture;
         m_pCapture = NULL;
     }
-	DEVMODE  DevMode;
-	memset(&DevMode, 0, sizeof(DevMode));
-	DevMode.dmSize = sizeof(DevMode);
-	DevMode.dmFields = DM_DISPLAYORIENTATION;
-	DevMode.dmDisplayOrientation = 1;
-	if(DISP_CHANGE_FAILED == ChangeDisplaySettingsEx(NULL, &DevMode, NULL, 0, NULL))
-	{
-		int err = GetLastError();
-		RETAILMSG(1, (_T("::::::::::::::: Unable to read current rotation. Rotation disabled (%d)::::::::::::::::\n"),err));				
-	}
+    RotateScreen(1);
+}
+
+void Ui_MainWnd::PaintWin(HDC hdc, RECT* prcUpdate){
+    RotateScreen(0);    //±£≥÷∫·∆¡
+    CMzWndEx::PaintWin(hdc,prcUpdate);
 }
 
 BOOL Ui_MainWnd::OnInitDialog() {

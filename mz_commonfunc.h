@@ -13,6 +13,8 @@ typedef enum TextEncode{
 #define LOADIMAGE(nID)	ImagingHelper::GetImageObject(ImgresHandle,nID)
 #define LOADSTRING(uID)	MzLoadString(uID,LangresHandle)
 
+bool RotateScreen(DWORD orientation);
+
 class MZ_CommonC
 {
 public:

@@ -11,6 +11,8 @@ class Ui_MainWnd : public CMzWndEx {
 public:
 	Ui_MainWnd();
 	~Ui_MainWnd();
+   	void PaintWin(HDC hdc, RECT* prcUpdate = NULL);
+
 public:
     UiToolbar_Text m_Toolbar;
     Ui_CaptureWnd *m_pCapture;

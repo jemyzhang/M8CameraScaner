@@ -145,11 +145,7 @@ public:
 	void setCameraPos(RECT rcCamera){
 		m_rcCamera = rcCamera;
 	}
-	void PaintWin(HDC hdc, RECT* prcUpdate = NULL){
-		HBRUSH myBrush = CreateSolidBrush(RGB(16,0,16));
-		FillRect(hdc,&m_rcCamera,myBrush);
-		CMzWndEx::PaintWin(hdc,prcUpdate);
-	}
+	void PaintWin(HDC hdc, RECT* prcUpdate = NULL);
 public:
 	ICameraDeviceInterface *m_pDevice;
 protected:

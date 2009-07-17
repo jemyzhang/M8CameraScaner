@@ -1,7 +1,6 @@
 #include "dmtxce.h"
 #include "resource.h"
-
-#include "libdmtx.h"
+#include "mz_commonfunc.h"
 
 // The global variable of the application.
 M8Dmtx theApp;
@@ -56,16 +55,7 @@ BOOL M8Dmtx::Init() {
         PostQuitMessage(0);
         return true; 
     }
-	DEVMODE  DevMode;
-	memset(&DevMode, 0, sizeof(DevMode));
-	DevMode.dmSize = sizeof(DevMode);
-	DevMode.dmFields = DM_DISPLAYORIENTATION;
-	DevMode.dmDisplayOrientation = 0;
-	if(DISP_CHANGE_FAILED == ChangeDisplaySettingsEx(NULL, &DevMode, NULL, 0, NULL))
-	{
-		int err = GetLastError();
-		RETAILMSG(1, (_T("::::::::::::::: Unable to read current rotation. Rotation disabled (%d)::::::::::::::::\n"),err));				
-	}
+    RotateScreen(0);    //∫·∆¡
 
     // Create the main window
     RECT rcWork = MzGetWorkArea();

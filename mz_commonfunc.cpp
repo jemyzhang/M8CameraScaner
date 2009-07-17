@@ -2,6 +2,22 @@
 #include <fstream>
 using namespace std;
 
+bool RotateScreen(DWORD orientation){
+    bool bRet = true;
+	DEVMODE  DevMode;
+	memset(&DevMode, 0, sizeof(DevMode));
+	DevMode.dmSize = sizeof(DevMode);
+	DevMode.dmFields = DM_DISPLAYORIENTATION;
+	DevMode.dmDisplayOrientation = orientation;
+	if(DISP_CHANGE_FAILED == ChangeDisplaySettingsEx(NULL, &DevMode, NULL, 0, NULL))
+	{
+		int err = GetLastError();
+		RETAILMSG(1, (_T("::::::::::::::: Unable to read current rotation. Rotation disabled (%d)::::::::::::::::\n"),err));
+        bRet = false;
+	}
+    return bRet;
+}
+
 int MZ_CommonDateTime::getWeekDay(int year,int month, int day){
 	int D,M,Y,A; 
 	D = day; M = month; Y = year;

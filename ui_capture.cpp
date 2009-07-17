@@ -65,6 +65,7 @@ void Ui_CaptureWnd::ShowBarCodeInfo( PTTOTALBARCODEINFO* pBar ){
 	QRCODE_RECORD_t qrcode;
 	this->qrcodeAnaysis(m_BarInfo.InfoList[0].Data,m_BarInfo.InfoList[0].dwDataLen,&qrcode);
 
+    //RotateScreen(1);    // ˙∆¡
 	Ui_ResultWnd dlg;
 	dlg.setDecodeType(T_QR_CODE);
 	dlg.setQRCodeRecord(&qrcode);
@@ -72,28 +73,8 @@ void Ui_CaptureWnd::ShowBarCodeInfo( PTTOTALBARCODEINFO* pBar ){
 	RECT rcWork = MzGetWorkArea();
 	dlg.Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
 	dlg.DoModal();
+    //RotateScreen(0);    //∫·∆¡
 
-#if 0
-	wsprintf( ch, L"Find %d barcodes\n", m_BarInfo.dwTotalCount );
-	CMzString str;
-	str = ch;
-	for( count=0; count<int(m_BarInfo.dwTotalCount); count++)
-	{
-		int i;
-		wsprintf( ch, L"barcode %d:\n", count+1 );
-		str = str + ch;
-		wchar_t* stmp = new wchar_t[m_BarInfo.InfoList[count].dwDataLen+1];
-		for( i=0; i<int(m_BarInfo.InfoList[count].dwDataLen); i++){
-			stmp[i] = m_BarInfo.InfoList[count].Data[i];
-		}
-		stmp[i] = 0;
-		str = str + stmp;
-		str= str + L"\n\n";
-		delete [] stmp;
-		stmp = 0;
-	}
-	MzAutoMsgBoxEx(m_hWnd,str.C_Str(),2000);
-#endif
 }
 
 bool Ui_CaptureWnd::PtApiDecoder(int type){
@@ -104,10 +85,10 @@ bool Ui_CaptureWnd::PtApiDecoder(int type){
 	//int width = GetWidth();
 	//int height = GetHeight();
 
-	//m_para.dwStartX = pos.x + m_rcCamera.left;//pos.x;
-	//m_para.dwStartY = pos.y + m_rcCamera.right;//pos.y;
-	//m_para.dwEndX = pos.x + m_rcCamera.right;//pos.x + width;
-	//m_para.dwEndY = pos.y + m_rcCamera.bottom;//pos.y + height;
+	m_para.dwStartX = m_rcCamera.left;//pos.x;
+	m_para.dwStartY = m_rcCamera.top;//pos.y;
+	m_para.dwEndX = m_rcCamera.right;//pos.x + width;
+	m_para.dwEndY = m_rcCamera.bottom;//pos.y + height;
 	if(type == 0){ //QR
 		PtQRDecodeInit(&CodeInfo);
 		if(  PtQRDecode ( &m_image, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
@@ -188,6 +169,13 @@ Ui_CaptureWnd::~Ui_CaptureWnd(){
 		m_pDevice = NULL;
 	}
 	PtFreeImage(&m_image);
+}
+
+void Ui_CaptureWnd::PaintWin(HDC hdc, RECT* prcUpdate){
+    RotateScreen(0);    //±£≥÷∫·∆¡
+    HBRUSH myBrush = CreateSolidBrush(RGB(16,0,16));
+    FillRect(hdc,&m_rcCamera,myBrush);
+    CMzWndEx::PaintWin(hdc,prcUpdate);
 }
 
 BOOL Ui_CaptureWnd::OnInitDialog() {
@@ -499,6 +487,7 @@ BOOL Ui_ResultWnd::OnInitDialog() {
 
 	y+=MZM_HEIGHT_CAPTION;
 	m_ScrollWin.SetPos(0,y,GetWidth(),GetHeight() - y - MZM_HEIGHT_TEXT_TOOLBAR_w720);
+    m_ScrollWin.EnableScrollBarV(true);
 	AddUiWin(&m_ScrollWin);
 
 	m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR_w720, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR_w720);
@@ -537,13 +526,12 @@ void Ui_ResultWnd::setupUi(){
 		m_pMultiLineEdit = new UiMultiLineEdit[m_pqrrecord->nEntry];
 		int y = 0;
 		for(int i = 0; i < m_pqrrecord->nEntry; i++){
-			m_pEntryTitles[i].SetPos(0,y,GetWidth(),MZM_HEIGHT_CAPTION);
+			m_pEntryTitles[i].SetPos(0,y,GetWidth()/5,MZM_HEIGHT_SINGLELINE_EDIT);
 			m_pEntryTitles[i].SetText(
 				qrCodeNames[nameidx].enames[m_pqrrecord->entries[i]->type]);
 			m_ScrollWin.AddChild(&m_pEntryTitles[i]);
 
-			y+=MZM_HEIGHT_CAPTION;
-			m_pMultiLineEdit[i].SetPos(0,y,GetWidth(),MZM_HEIGHT_SINGLELINE_EDIT*2);
+			m_pMultiLineEdit[i].SetPos(GetWidth()/5,y,GetWidth()*4/5 - 20,MZM_HEIGHT_SINGLELINE_EDIT*2);
 			m_pMultiLineEdit[i].SetText(
 				m_pqrrecord->entries[i]->content);
 			m_pMultiLineEdit[i].SetEditBgType(UI_EDIT_BGTYPE_FILL_WHITE_AND_TOPSHADOW);
@@ -551,7 +539,7 @@ void Ui_ResultWnd::setupUi(){
 			m_pMultiLineEdit[i].SetInsideScroll(true);
 			m_ScrollWin.AddChild(&m_pMultiLineEdit[i]);
 
-			y+=MZM_HEIGHT_SINGLELINE_EDIT*2;
+			y+=MZM_HEIGHT_SINGLELINE_EDIT*2 + 5;
 		}
 	}else{
 	}
