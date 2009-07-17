@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions=" /subsystem:windowsce,6.00 /machine:ARM /ARMPADCODE /MACHINE:THUMB "
-				AdditionalDependencies="mzfc.lib strmiids.lib strmbase.lib libdmtxce.lib"
+				AdditionalDependencies="mzfc.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
 				OutputFile="$(OutDir)/dmtxce.exe"
 				LinkIncremental="2"
 				DelayLoadDLLs="$(NOINHERIT)"
@@ -151,7 +151,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions=" /subsystem:windowsce,6.00"
-				AdditionalDependencies="mzfc.lib strmiids.lib strmbase.lib libdmtxce.lib"
+				AdditionalDependencies="mzfc.lib strmiids.lib strmbase.lib libdmtxce.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
 				OutputFile="$(OutDir)/dmtxce.exe"
 				LinkIncremental="1"
 				DelayLoadDLLs="$(NOINHERIT)"
@@ -228,11 +228,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\libdmtx.h"
+				RelativePath=".\mz_commonfunc.h"
 				>
 			</File>
 			<File
-				RelativePath=".\mz_commonfunc.h"
+				RelativePath=".\PtAPICE.h"
 				>
 			</File>
 			<File
