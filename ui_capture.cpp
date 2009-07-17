@@ -85,10 +85,11 @@ bool Ui_CaptureWnd::PtApiDecoder(int type){
 	//int width = GetWidth();
 	//int height = GetHeight();
 
-	m_para.dwStartX = m_rcCamera.left;//pos.x;
-	m_para.dwStartY = m_rcCamera.top;//pos.y;
-	m_para.dwEndX = m_rcCamera.right;//pos.x + width;
-	m_para.dwEndY = m_rcCamera.bottom;//pos.y + height;
+    m_para.dwStartX = pos.x + m_rcCamera.left;//pos.x;
+	m_para.dwStartY = pos.y + m_rcCamera.top;//pos.y;
+	m_para.dwEndX = pos.x + m_rcCamera.right;//pos.x + width;
+	m_para.dwEndY = pos.y + m_rcCamera.bottom;//pos.y + height;
+    m_para.dwMaxCount = 0;
 	if(type == 0){ //QR
 		PtQRDecodeInit(&CodeInfo);
 		if(  PtQRDecode ( &m_image, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
@@ -174,7 +175,12 @@ Ui_CaptureWnd::~Ui_CaptureWnd(){
 void Ui_CaptureWnd::PaintWin(HDC hdc, RECT* prcUpdate){
     RotateScreen(0);    //±£³ÖºáÆÁ
     HBRUSH myBrush = CreateSolidBrush(RGB(16,0,16));
+#if 0
+    RECT rc = {0,0,720,480};
+    FillRect(hdc,&rc,myBrush);
+#else
     FillRect(hdc,&m_rcCamera,myBrush);
+#endif
     CMzWndEx::PaintWin(hdc,prcUpdate);
 }
 
@@ -536,7 +542,7 @@ void Ui_ResultWnd::setupUi(){
 				m_pqrrecord->entries[i]->content);
 			m_pMultiLineEdit[i].SetEditBgType(UI_EDIT_BGTYPE_FILL_WHITE_AND_TOPSHADOW);
 			m_pMultiLineEdit[i].SetReadOnly(true);
-			m_pMultiLineEdit[i].SetInsideScroll(true);
+			//m_pMultiLineEdit[i].SetInsideScroll(true);
 			m_ScrollWin.AddChild(&m_pMultiLineEdit[i]);
 
 			y+=MZM_HEIGHT_SINGLELINE_EDIT*2 + 5;
