@@ -217,6 +217,10 @@
 				RelativePath=".\ui_main.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ui_ProgressBar.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Í·ÎÄ¼þ"
@@ -245,6 +249,10 @@
 			</File>
 			<File
 				RelativePath=".\ui_main.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ui_ProgressBar.h"
 				>
 			</File>
 		</Filter>

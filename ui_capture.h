@@ -49,8 +49,8 @@ typedef enum QR_ENTRY_TYPE {
 	QR_CARD_ZIPCODE		=	5,
 	QR_CARD_MOBILE		=	6,
 	QR_CARD_TEL			=	7,
-	QR_CARD_FAX			=	9,
-	QR_CARD_EMAIL		=	10,
+	QR_CARD_FAX			=	8,
+	QR_CARD_EMAIL		=	9,
 
 	QR_SMS_RECEIVER		=	1,
 	QR_SMS_CONTENT		=	2,
@@ -134,6 +134,24 @@ typedef enum BarCodeType{
 	T_UNKNOWN	=	0xff,
 }BarCodeType_t;
 
+class UiOption : public UiButton
+{
+public:
+    UiOption(void){ SetButtonType(MZC_BUTTON_NONE);}
+	~UiOption(void) {}
+	void SetStatus(bool b) { bSelected = b; }
+	bool GetStatus() { return bSelected; }
+protected:
+	virtual void PaintWin(HDC hdcDst, RECT* prcWin, RECT* prcUpdate){
+        SetBkMode(hdcDst,TRANSPARENT);
+        RECT rcStatus = {prcWin->left + 5,prcWin->top,prcWin->left + 30, prcWin->bottom};
+		MzDrawControl(hdcDst, &rcStatus,  bSelected ? MZC_SELECTED : MZC_UNSELECTED, 0);
+        RECT rcText = {rcStatus.right + 5, prcWin->top, prcWin->right, prcWin->bottom};
+        MzDrawText(hdcDst,GetText(),&rcText,GetDrawTextFormat());
+	}
+private:
+	bool bSelected;
+};
 // Main window derived from CMzWndEx
 class Ui_CaptureWnd : public CMzWndEx {
     MZ_DECLARE_DYNAMIC(Ui_CaptureWnd);
@@ -165,7 +183,7 @@ private:	//PtAPI
 		PtInitImage(&m_image);
 		memset( &m_para, 0 ,sizeof(m_para) );
 	}
-	bool PtApiDecoder(int type);
+	bool PtApiDecoder(BarCodeType_t type);
 	bool PtApiDecoder(const TCHAR* FileName, int type);
 	bool PtApiDecoder(HBITMAP hBitmap, int type);
 	// Operations
@@ -185,6 +203,9 @@ private:
     bool isPaused;
 	RECT m_rcCamera;
 	UiToolbar_Text m_Toolbar;
+    UiOption m_OptionQR;
+    UiOption m_OptionDM;
+    BarCodeType_t m_bartype;
 };
 
 // Main window derived from CMzWndEx
@@ -225,4 +246,6 @@ private:
 	BarCodeType_t m_type;
 	QRCODE_RECORD_ptr m_pqrrecord;
 };
+
+
 #endif /*_UI_CAPTURE_H*/
