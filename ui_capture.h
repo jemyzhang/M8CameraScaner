@@ -38,6 +38,10 @@ typedef enum QR_TYPE {
 	QR_MAIL		=	3,		//邮件
 	QR_URL		=	4,		//网站链接
 	QR_TEXT		=	5,		//带标题的文本
+    QR_AD       =   6,      //非标准 WAP或电话呼叫
+    QR_BLOG     =   7,      //...Blog
+    QR_GIS      =   8,      //地图
+    QR_ENC      =   9,      //加密文字
 	QR_UNKNOWN	=	0xff,	//未知
 }QR_t;
 
@@ -67,6 +71,18 @@ typedef enum QR_ENTRY_TYPE {
 	QR_SITE_URL			=	1,
 
 	QR_TXT_TEXT			=	0,
+
+    QR_AD_SUB           =   0,
+    QR_AD_URL           =   1,
+    QR_AD_CT            =   2,
+
+    QR_BLOG_SUB         =   0,
+    QR_BLOG_URL         =   1,
+
+    QR_GIS_URL          =   0,
+
+    QR_ENC_TXT          =   0,
+    QR_ENC_PWD          =   1,
 
 	QR_ENTRY_UNKNOWN	=	0xff
 }QR_ENTRY_t;

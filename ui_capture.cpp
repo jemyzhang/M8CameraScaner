@@ -391,6 +391,11 @@ const QRCODE_TAGS_t qrtags[] = {
     {QR_MAIL,		'MAIL'},
     {QR_URL,		'SITE'},
     {QR_TEXT,		'DTXT'},
+    {QR_AD,         'AD'  },
+    {QR_BLOG,       'BLOG'},
+    {QR_GIS,        'GIS' },
+    {QR_ENC,        'ENC' },
+    {QR_URL,        'MARK'},    //'BOOKMARK'
 };
 
 const QRCODE_CONTENT_TAGS_t qrCardtags[] = {
@@ -425,6 +430,30 @@ const QRCODE_CONTENT_TAGS_t qrTexttags[] = {
 const QRCODE_CONTENT_TAGS_t qrSitetags[] = {
     {QR_SITE_TITLE		,'TITL'},
     {QR_SITE_URL		,'URL'},
+    {QR_ENTRY_UNKNOWN	,0	},
+};
+
+const QRCODE_CONTENT_TAGS_t qrAdtags[] = {
+    {QR_AD_SUB		    ,'SUB'},
+    {QR_AD_URL	    	,'URL'},
+    {QR_AD_CT	    	,'CT'},
+    {QR_ENTRY_UNKNOWN	,0	},
+};
+
+const QRCODE_CONTENT_TAGS_t qrBlogtags[] = {
+    {QR_BLOG_SUB		    ,'SUB'},
+    {QR_BLOG_URL	    	,'URL'},
+    {QR_ENTRY_UNKNOWN	,0	},
+};
+
+const QRCODE_CONTENT_TAGS_t qrGistags[] = {
+    {QR_GIS_URL 		    ,'URL'},
+    {QR_ENTRY_UNKNOWN	,0	},
+};
+
+const QRCODE_CONTENT_TAGS_t qrEnctags[] = {
+    {QR_ENC_TXT 		    ,'TXT'},
+    {QR_ENC_PWD 		    ,'PWD'},
     {QR_ENTRY_UNKNOWN	,0	},
 };
 
@@ -478,6 +507,42 @@ const QRCODE_NAMES_t qrCodeNames[] = {
             L"内容"
         }
     },
+    {
+        QR_AD,
+            L"链接或电话",
+            3,
+        {
+            L"类型",
+            L"WAP链接",
+            L"呼叫电话"
+        }
+    },
+    {
+        QR_BLOG,
+            L"博客",
+            2,
+        {
+            L"名称",
+            L"链接地址"
+        }
+    },
+    {
+        QR_GIS,
+            L"地图",
+            1,
+        {
+            L"链接地址"
+        }
+    },
+    {
+        QR_ENC,
+            L"加密文字",
+            2,
+        {
+            L"文本",
+            L"密码"
+        }
+    },
 };
 
 const QRCODE_CONTENT_TAGS_t* Ui_CaptureWnd::qrcodeDecideEntryTagGroup(QR_t t){
@@ -497,6 +562,18 @@ const QRCODE_CONTENT_TAGS_t* Ui_CaptureWnd::qrcodeDecideEntryTagGroup(QR_t t){
                 break;
             case QR_TEXT:
                 entrytags = qrTexttags;
+                break;
+            case QR_AD:
+                entrytags = qrAdtags;
+                break;
+            case QR_BLOG:
+                entrytags = qrBlogtags;
+                break;
+            case QR_GIS:
+                entrytags = qrGistags;
+                break;
+            case QR_ENC:
+                entrytags = qrEnctags;
                 break;
     }
     return entrytags;
