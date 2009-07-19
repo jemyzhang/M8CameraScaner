@@ -61,9 +61,9 @@ void Ui_MainWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 						m_pCapture = new Ui_CaptureWnd;
 					}
                         RECT rcWork = MzGetWorkArea();
-						RECT rcCamera = {(GetWidth() - 240)/2,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2,
-						(GetWidth() - 240)/2 + 240,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2 + 240};
-						m_pCapture->setCameraPos(rcCamera);
+						//RECT rcCamera = {(GetWidth() - 240)/2,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2,
+						//(GetWidth() - 240)/2 + 240,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2 + 240};
+						//m_pCapture->setCameraPos(rcCamera);
                         m_pCapture->Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
 						m_pCapture->DoModal();
 						delete m_pCapture;

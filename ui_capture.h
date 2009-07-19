@@ -7,6 +7,7 @@
 #include <ICameraDeviceInterface.h>
 
 #include "PtAPICE.h"
+#include "BarRecog.h"
 
 #define MAX_BARCODE_DATA_LEN 8000
 #define MAX_BARCODE_COUNT    8
@@ -52,8 +53,8 @@ typedef enum QR_ENTRY_TYPE {
 	QR_CARD_FAX			=	8,
 	QR_CARD_EMAIL		=	9,
 
-	QR_SMS_RECEIVER		=	1,
-	QR_SMS_CONTENT		=	2,
+	QR_SMS_RECEIVER		=	0,
+	QR_SMS_CONTENT		=	1,
 
 	QR_MAIL_RECEIVER	=	0,
 	QR_MAIL_SUBJECT		=	1,
@@ -131,6 +132,7 @@ typedef struct QRCODE_NAMES{
 typedef enum BarCodeType{
 	T_QR_CODE	=	0,
 	T_DATAMATRIX_CODE	=	1,
+    T_BAR_CODE  =   3,
 	T_UNKNOWN	=	0xff,
 }BarCodeType_t;
 
@@ -160,8 +162,18 @@ public:
 	~Ui_CaptureWnd();
 
     bool StartDecode();
-	void setCameraPos(RECT rcCamera){
-		m_rcCamera = rcCamera;
+	void adjustCameraPos(){
+        RECT rcCameraSquare = {(GetWidth() - 240)/2,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2,
+						(GetWidth() - 240)/2 + 240,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2 + 240};
+        RECT rcCameraRect = {(GetWidth() - 320)/2,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2,
+						(GetWidth() - 320)/2 + 320,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2 + 240};
+        if(m_bartype == T_BAR_CODE){
+            m_rcCamera = rcCameraRect;
+        }else{
+            m_rcCamera = rcCameraSquare;
+        }
+        this->Invalidate();
+        this->UpdateWindow();
 	}
 	void PaintWin(HDC hdc, RECT* prcUpdate = NULL);
 public:
@@ -205,7 +217,9 @@ private:
 	UiToolbar_Text m_Toolbar;
     UiOption m_OptionQR;
     UiOption m_OptionDM;
+    UiOption m_OptionBAR;
     BarCodeType_t m_bartype;
+    MzBarDecoder decoder;
 };
 
 // Main window derived from CMzWndEx
