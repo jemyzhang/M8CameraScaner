@@ -1,9 +1,9 @@
-#include "dmtxce.h"
+#include "BarCodeScanner.h"
 #include "resource.h"
 #include "mz_commonfunc.h"
 
 // The global variable of the application.
-M8Dmtx theApp;
+M8BarCodeScanner theApp;
 HINSTANCE LangresHandle;
 HINSTANCE ImgresHandle;
 //ImagingHelper *pimg[IDB_PNG_END - IDB_PNG_BEGIN + 1];
@@ -11,7 +11,7 @@ HINSTANCE ImgresHandle;
 //AppConfigIni appconfig;
 
 
-void M8Dmtx::loadImageRes(){
+void M8BarCodeScanner::loadImageRes(){
 	/*
 	ImgresHandle = MzGetInstanceHandle();
 	for(int i = 0; i < sizeof(pimg) / sizeof(pimg[0]); i++){
@@ -22,7 +22,7 @@ void M8Dmtx::loadImageRes(){
 	*/
 }
 
-void M8Dmtx::LoadLangRes(){
+void M8BarCodeScanner::LoadLangRes(){
     //载入资源
     LangresHandle = LoadLibrary(L"language.dll");
     if(LangresHandle){
@@ -33,14 +33,14 @@ void M8Dmtx::LoadLangRes(){
     }
 }
 
-void M8Dmtx::LoadRes(){
+void M8BarCodeScanner::LoadRes(){
     //载入图像资源
     loadImageRes();
     //载入语言资源
     LoadLangRes();
 }
 
-BOOL M8Dmtx::Init() {
+BOOL M8BarCodeScanner::Init() {
     // Init the COM relative library.
     CoInitializeEx(0, COINIT_MULTITHREADED);
 
@@ -66,7 +66,7 @@ BOOL M8Dmtx::Init() {
     return TRUE;
 }
 
-int M8Dmtx::Done(){
+int M8BarCodeScanner::Done(){
     FreeMzResModule();
     if(isExternLangres) FreeLibrary(LangresHandle);
     return CMzApp::Done();

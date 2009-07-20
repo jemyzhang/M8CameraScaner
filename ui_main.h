@@ -16,6 +16,8 @@ public:
 public:
     UiToolbar_Text m_Toolbar;
     Ui_CaptureWnd *m_pCapture;
+	UiButton m_ButtonCapture;
+	UiButton m_ButtonLoadFile;
 protected:
     // Initialization of the window (dialog)
     virtual BOOL OnInitDialog();
@@ -25,6 +27,8 @@ protected:
 
     // override the MZFC command handler
     virtual void OnMzCommand(WPARAM wParam, LPARAM lParam);
+
+	bool OnShellMessage(UINT message, WPARAM wParam, LPARAM lParam);
 };
 
 

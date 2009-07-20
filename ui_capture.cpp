@@ -6,7 +6,11 @@ using namespace MZ_CommonFunc;
 
 #include <InitGuid.h>
 #include <ICamera_GUID.h>
-
+#include <IMzUnknown.h>
+#include <IMzUnknown_IID.h>
+#include <IFileBrowser.h>
+#include <IFileBrowser_GUID.h>
+#include <ShellNotifyMsg.h>
 
 #define MZ_IDC_TOOLBAR_MAIN 101
 #define MZ_IDC_OPTION_QR    102
@@ -44,8 +48,7 @@ void Ui_CaptureWnd::InitBarCodeInfo( )
     }
 }
 void Ui_CaptureWnd::ShowBarCodeInfo( PTTOTALBARCODEINFO* pBar ){
-    int  count, i;
-    wchar_t ch[200];
+    int   i;
     uiRefreshProgressBar(L"解码完成",2,3);
     if( pBar->dwTotalCount<=0 )
     {
@@ -70,7 +73,6 @@ void Ui_CaptureWnd::ShowBarCodeInfo( PTTOTALBARCODEINFO* pBar ){
     QRCODE_RECORD_t qrcode;
     this->qrcodeAnaysis(m_BarInfo.InfoList[0].Data,m_BarInfo.InfoList[0].dwDataLen,&qrcode);
 
-    //RotateScreen(1);    //竖屏
     Ui_ResultWnd dlg;
     dlg.setDecodeType(m_bartype);
     dlg.setQRCodeRecord(&qrcode);
@@ -78,7 +80,6 @@ void Ui_CaptureWnd::ShowBarCodeInfo( PTTOTALBARCODEINFO* pBar ){
     RECT rcWork = MzGetWorkArea();
     dlg.Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
     dlg.DoModal();
-    //RotateScreen(0);    //横屏
 
 }
 
@@ -86,14 +87,11 @@ bool Ui_CaptureWnd::PtApiDecoder(BarCodeType_t type){
     bool bRet = false;
     InitBarCodeInfo();
     PTTOTALBARCODEINFO CodeInfo;
-    POINT pos = this->GetWindowPos();
-    //int width = GetWidth();
-    //int height = GetHeight();
 
-    m_para.dwStartX = pos.x + m_rcCamera.left;//pos.x;
-    m_para.dwStartY = pos.y + m_rcCamera.top;//pos.y;
-    m_para.dwEndX = pos.x + m_rcCamera.right;//pos.x + width;
-    m_para.dwEndY = pos.y + m_rcCamera.bottom;//pos.y + height;
+	m_para.dwStartX = m_rcScanRegion.left;
+	m_para.dwStartY = m_rcScanRegion.top;
+	m_para.dwEndX = m_rcScanRegion.right;
+	m_para.dwEndY = m_rcScanRegion.bottom;
     m_para.dwMaxCount = 0;
     if(type == T_QR_CODE){ //QR
         PtQRDecodeInit(&CodeInfo);
@@ -165,6 +163,12 @@ bool Ui_CaptureWnd::PtApiDecoder(HBITMAP hBitmap, int type){
 Ui_CaptureWnd::Ui_CaptureWnd(){
     isInitialized = false;
     isPaused = false;
+	m_source = DECODE_FROM_CAMERA;
+	m_ImageFile = NULL;
+	m_rcScanRegion.left = 0;
+	m_rcScanRegion.right = 0;
+	m_rcScanRegion.top = 0;
+	m_rcScanRegion.bottom = 0;
     InitPtApi();
 }
 
@@ -173,19 +177,24 @@ Ui_CaptureWnd::~Ui_CaptureWnd(){
         m_pDevice->UnInitDevice();
         m_pDevice->Release();
         m_pDevice = NULL;
+		//::UnRegisterShellMessage(m_hWnd,WM_MZSH_ENTRY_LOCKPHONE | WM_MZSH_READY_POWEROFF);
     }
     PtFreeImage(&m_image);
 }
 
 void Ui_CaptureWnd::PaintWin(HDC hdc, RECT* prcUpdate){
     RotateScreen(0);    //保持横屏
-    HBRUSH myBrush = CreateSolidBrush(RGB(16,0,16));
-#if 0
-    RECT rc = {0,0,720,480};
-    FillRect(hdc,&rc,myBrush);
-#else
-    FillRect(hdc,&m_rcCamera,myBrush);
-#endif
+	if(m_source == DECODE_FROM_CAMERA){
+		HBRUSH myBrush = CreateSolidBrush(RGB(16,0,16));
+		FillRect(hdc,&m_rcCamera,myBrush);
+	}else if(m_source == DECODE_FROM_FILE){
+		if(m_ImageFile){
+			ImagingHelper image;
+			image.LoadImageW(m_ImageFile,true,true);
+			image.Draw(hdc,&m_rcCamera,true,false);
+		}
+	}
+
     CMzWndEx::PaintWin(hdc,prcUpdate);
 }
 
@@ -217,41 +226,19 @@ BOOL Ui_CaptureWnd::OnInitDialog() {
     m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR_w720, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR_w720);
     m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
     m_Toolbar.SetTextBarType(TEXT_TOOLBAR_TYPE_720);
-    m_Toolbar.SetButton(0, true, true, L"对焦");
+	if(m_source == DECODE_FROM_CAMERA){
+		m_Toolbar.SetButton(0, true, true, L"对焦");
+	}else if(m_source == DECODE_FROM_FILE){
+		m_Toolbar.SetButton(0, true, true, L"打开文件");
+	}
     m_Toolbar.SetButton(1, true, true, L"解码");
     m_Toolbar.SetButton(2, true, true, L"关闭");
     AddUiWin(&m_Toolbar);
     adjustCameraPos();
 
-    initUiProgressBar(L"启动摄像头",m_hWnd);
-    uiRefreshProgressBar(L"准备摄像头",0,3);
-    // Then init the controls & other things in the window
-    if(	SUCCEEDED(CoCreateInstance(CLSID_CameraDevice, NULL,CLSCTX_INPROC_SERVER ,IID_MZ_CameraInterface,(void **)&m_pDevice))){
-        uiRefreshProgressBar(L"初始化摄像头设备",1,3);
-        if( SUCCEEDED( m_pDevice->InitDevice(m_hWnd/*m_wnd*/)) )
-        {
-            uiRefreshProgressBar(L"设置摄像头参数",2,3);
-            /*        
-            QXGA_PHOTO_SIZE 2048 * 1536
-            UXGA_PHOTO_SIZE 1600 * 1200
-            XGA_PHOTO_SIZE 1024 * 768
-            VGA_PHOTO_SIZE 640 * 480 
-            */
-            m_pDevice->SetPhotoSize(VGA_PHOTO_SIZE);
-            /*        
-            BRIGHTNESS_LEVEL_1 ~ BRIGHTNESS_LEVEL_6
-            */
-            m_pDevice->SetBrightness(BRIGHTNESS_LEVEL_6);
-            m_pDevice->IsDrawPreviewFrame(true);
-            m_pDevice->SetMode(MODE_TYPE_AUTO);
-            m_pDevice->SetEffect(EFFECT_TYPE_NORMAL);
-            m_pDevice->SetPhotoName(L"/cap.jpg");
-            isInitialized = true;
-            m_pDevice->StartPreview();
-            //m_pDevice->SetPreviewAreaAlphaValue(5);
-        }
-    }
-    uiRefreshProgressBar(NULL,3,3);
+	if(m_source == DECODE_FROM_CAMERA){
+		InitCameraDevice();
+	}
 
     return TRUE;
 }
@@ -261,62 +248,122 @@ LRESULT Ui_CaptureWnd::MzDefWndProc(UINT message, WPARAM wParam, LPARAM lParam) 
     return CMzWndEx::MzDefWndProc(message, wParam, lParam);
 }
 
+bool Ui_CaptureWnd::InitCameraDevice(){
+	bool bRet = false;
+	initUiProgressBar(L"启动摄像头",m_hWnd);
+	uiRefreshProgressBar(L"准备摄像头",0,3);
+	// Then init the controls & other things in the window
+	if(	SUCCEEDED(CoCreateInstance(CLSID_CameraDevice, NULL,CLSCTX_INPROC_SERVER ,IID_MZ_CameraInterface,(void **)&m_pDevice))){
+		uiRefreshProgressBar(L"初始化摄像头设备",1,3);
+		if( SUCCEEDED( m_pDevice->InitDevice(m_hWnd/*m_wnd*/)) )
+		{
+			uiRefreshProgressBar(L"设置摄像头参数",2,3);
+			/*        
+			QXGA_PHOTO_SIZE 2048 * 1536
+			UXGA_PHOTO_SIZE 1600 * 1200
+			XGA_PHOTO_SIZE 1024 * 768
+			VGA_PHOTO_SIZE 640 * 480 
+			*/
+			m_pDevice->SetPhotoSize(VGA_PHOTO_SIZE);
+			/*        
+			BRIGHTNESS_LEVEL_1 ~ BRIGHTNESS_LEVEL_6
+			*/
+			C::newstrcpy(&m_ImageFile,L"/cap.jpg");
+			m_pDevice->SetBrightness(BRIGHTNESS_LEVEL_6);
+			m_pDevice->IsDrawPreviewFrame(true);
+			m_pDevice->SetMode(MODE_TYPE_AUTO);
+			m_pDevice->SetEffect(EFFECT_TYPE_NORMAL);
+			m_pDevice->SetPhotoName(m_ImageFile);
+			isInitialized = true;
+			m_pDevice->StartPreview();
+			bRet = true;
+			//m_pDevice->SetPreviewAreaAlphaValue(5);
+		}
+	}
+	uiRefreshProgressBar(NULL,3,3);
+	return bRet;
+}
+
 bool Ui_CaptureWnd::StartDecode(){
-    if(isInitialized){
-        while(!m_pDevice->IsAFEnd());
-        m_pDevice->PausePreview();
-
-        initUiProgressBar(L"启动解码",m_hWnd);
-        uiRefreshProgressBar(L"获取图像",0,3);
-        m_pDevice->TakePhoto();
-        ImagingHelper m_Image;
-
-        DateTime::waitms(1000);
-        int retry = 3;
-        int bdecode = 1;
-        while(retry--){
-            if(m_bartype == T_BAR_CODE){
-                POINT pos = this->GetWindowPos();
-
-                DECODEPARA_t param;
-                param.dwScanRegion.left = pos.x + m_rcCamera.left;
-                param.dwScanRegion.top = pos.y + m_rcCamera.top;
-                param.dwScanRegion.right = pos.x + m_rcCamera.right;
-                param.dwScanRegion.bottom = pos.y + m_rcCamera.bottom;
-                param.dwThrehold = 160;
-                if(decoder.DecodeFromFile(L"/cap.jpg",&param)){
-                    bdecode = 0;
-                }
-                if(bdecode == 0){//解码完成
-                    break;
-                }
-            }else{
-                int frames=PtGetImageFrames( L"/cap.jpg" );
-                if(frames > 0){
-                    int ret = PtLoadImage(L"/cap.jpg",&m_image,frames - 1);
-                    bdecode = 2;
-                    if(ret == PT_IMAGERW_SUCCESS){
-                        bdecode = 0;
-                        uiRefreshProgressBar(L"开始解码",1,3);
-                        PtApiDecoder(m_bartype);
-                    }
-                }
-            }
-            if(bdecode == 0){//解码完成
-                break;
-            }
-            DateTime::waitms(200);
-        }
-        uiRefreshProgressBar(NULL,3,3);
-        if(bdecode){
-            wchar_t errmsg[128];
-            wsprintf(errmsg,L"图像获取失败:%d",bdecode);
-            MzAutoMsgBoxEx(m_hWnd,errmsg,2000);
-        }
-        PtFreeImage(&m_image);
-        m_pDevice->StartPreview();
-    }
+	int retry = 3;
+	int bdecode = 1;
+	while(retry--){
+		if(m_bartype == T_BAR_CODE){
+			DECODEPARA_t param;
+			param.dwScanRegion = m_rcScanRegion;
+			param.dwThrehold = 160;
+			BYTE code[200];
+			DWORD codelen;
+			if(decoder.DecodeFromFile(m_ImageFile,code,&codelen,&param)){
+				bdecode = 0;
+			}
+			if(bdecode == 0){//解码完成
+				PTTOTALBARCODEINFO bar;
+				PTBARCODEINFO infolist;
+				infolist.dwDataLen = codelen;
+				infolist.pData = code;
+				bar.dwTotalCount = 1;
+				bar.pInfoList = &infolist;
+				ShowBarCodeInfo( &bar );
+				break;
+			}
+		}else{
+			int frames=PtGetImageFrames( m_ImageFile );
+			if(frames > 0){
+				int ret = PtLoadImage(m_ImageFile,&m_image,frames - 1);
+				bdecode = 2;
+				if(ret == PT_IMAGERW_SUCCESS){
+					bdecode = 0;
+					uiRefreshProgressBar(L"开始解码",1,3);
+					PtApiDecoder(m_bartype);
+				}
+			}
+		}
+		if(bdecode == 0){//解码完成
+			break;
+		}
+		DateTime::waitms(200);
+	}
+	uiRefreshProgressBar(NULL,3,3);
+	if(bdecode){
+		wchar_t errmsg[128];
+		wsprintf(errmsg,L"图像读取失败:%d",bdecode);
+		MzAutoMsgBoxEx(m_hWnd,errmsg,2000);
+	}
+	PtFreeImage(&m_image);
     return false;
+}
+
+bool Ui_CaptureWnd::GetImageFile(){
+	bool nRet = false;
+	IFileBrowser *pFile = NULL;
+	RotateScreen(1);
+	CoInitializeEx(NULL, COINIT_MULTITHREADED );
+	IMzSelect *pSelect = NULL; 
+	if ( SUCCEEDED( CoCreateInstance( CLSID_FileBrowser, NULL,CLSCTX_INPROC_SERVER ,IID_MZ_FileBrowser,(void **)&pFile ) ) )
+	{     
+		if( SUCCEEDED( pFile->QueryInterface( IID_MZ_Select, (void**)&pSelect ) ) )
+		{
+			TCHAR file[ MAX_PATH ] = { 0 };
+			pFile->SetParentWnd( m_hWnd );
+			pFile->SetOpenDirectoryPath( L"\\Disk" );
+			pFile->SetExtFilter( L"*.jpg;*.gif;*.png;*.bmp");                                      
+			pFile->SetOpenDocumentType(DOCUMENT_SELECT_SINGLE_FILE);
+			CMzString fileDlgTitle = L"选择图片";
+			pFile->SetTitle((TCHAR*)fileDlgTitle.C_Str());
+
+			if( pSelect->Invoke() ) 
+			{						
+				C::newstrcpy( &m_ImageFile, pFile->GetSelectedFileName() );
+				nRet = true;
+			}
+			pSelect->Release();
+		}     
+		pFile->Release();
+	}	
+	CoUninitialize();
+	RotateScreen(0);
+	return nRet;
 }
 
 void Ui_CaptureWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
@@ -359,10 +406,42 @@ void Ui_CaptureWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
             {
                 int nIndex = lParam;
                 if(nIndex == 0){
-                    m_pDevice->StartAF();
+					if(m_source == DECODE_FROM_CAMERA){
+						m_pDevice->StartAF();
+					}else if(m_source == DECODE_FROM_FILE){
+						GetImageFile();
+					}
                 }
                 if(nIndex == 1){
-                    StartDecode();
+					initUiProgressBar(L"启动解码",m_hWnd);
+					if(m_source == DECODE_FROM_CAMERA){
+						if(isInitialized){
+							while(!m_pDevice->IsAFEnd());
+							m_pDevice->PausePreview();
+							uiRefreshProgressBar(L"获取图像",0,3);
+							m_pDevice->TakePhoto();
+					        DateTime::waitms(1000);
+							POINT pos = this->GetWindowPos();
+
+							m_rcScanRegion.left = pos.x + m_rcCamera.left;
+							m_rcScanRegion.top = pos.y + m_rcCamera.top;
+							m_rcScanRegion.right = pos.x + m_rcCamera.right;
+							m_rcScanRegion.bottom = pos.y + m_rcCamera.bottom;
+		                    StartDecode();
+					        m_pDevice->StartPreview();
+						}
+					}else if(m_source == DECODE_FROM_FILE){
+						if(m_ImageFile == NULL){
+							GetImageFile();
+						}
+						if(m_ImageFile){
+							m_rcScanRegion.left = 0;
+							m_rcScanRegion.top = 0;
+							m_rcScanRegion.right = 0;
+							m_rcScanRegion.bottom = 0;
+							StartDecode();
+						}
+					}
                 }
                 if(nIndex == 2){
                     //this->Show(false);
@@ -396,6 +475,13 @@ const QRCODE_TAGS_t qrtags[] = {
     {QR_GIS,        'GIS' },
     {QR_ENC,        'ENC' },
     {QR_URL,        'MARK'},    //'BOOKMARK'
+	{BAR_CODE,		'LBAR'},	//Special
+};
+
+const QRCODE_CONTENT_TAGS_t qrBartags[] = {
+    {QR_BAR_TYPE		,'T'},
+    {QR_BAR_CODE		,'CODE'},
+    {QR_ENTRY_UNKNOWN	,0	},
 };
 
 const QRCODE_CONTENT_TAGS_t qrCardtags[] = {
@@ -543,6 +629,15 @@ const QRCODE_NAMES_t qrCodeNames[] = {
             L"密码"
         }
     },
+    {
+        BAR_CODE,
+            L"条形码",
+            2,
+        {
+            L"类型",
+            L"序列"
+        }
+    },
 };
 
 const QRCODE_CONTENT_TAGS_t* Ui_CaptureWnd::qrcodeDecideEntryTagGroup(QR_t t){
@@ -575,6 +670,9 @@ const QRCODE_CONTENT_TAGS_t* Ui_CaptureWnd::qrcodeDecideEntryTagGroup(QR_t t){
             case QR_ENC:
                 entrytags = qrEnctags;
                 break;
+			case BAR_CODE:
+				entrytags = qrBartags;
+				break;
     }
     return entrytags;
 }
@@ -687,7 +785,7 @@ void Ui_ResultWnd::setupUi(){
     }else if(m_type == T_DATAMATRIX_CODE){
         m_Title.SetText(L"DM Code");
     }else if(m_type == T_BAR_CODE){
-        m_Title.SetText(L"BAR Code");
+        m_Title.SetText(L"条形码");
     }
     m_Title.Invalidate();
     m_Title.Update();
@@ -706,7 +804,7 @@ void Ui_ResultWnd::setupUi(){
     }else if(m_type == T_DATAMATRIX_CODE){
         stitle = L"DM Code[";
     }else if(m_type == T_BAR_CODE){
-        stitle = L"BAR Code[";
+        stitle = L"条形码[";
     }
     stitle = stitle + qrCodeNames[nameidx].tname;
     stitle = stitle + L"]";

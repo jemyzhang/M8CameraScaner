@@ -42,6 +42,7 @@ typedef enum QR_TYPE {
     QR_BLOG     =   7,      //...Blog
     QR_GIS      =   8,      //地图
     QR_ENC      =   9,      //加密文字
+	BAR_CODE	=	10,		//1d条形码
 	QR_UNKNOWN	=	0xff,	//未知
 }QR_t;
 
@@ -83,6 +84,9 @@ typedef enum QR_ENTRY_TYPE {
 
     QR_ENC_TXT          =   0,
     QR_ENC_PWD          =   1,
+
+	QR_BAR_TYPE			=	0,
+	QR_BAR_CODE			=	1,
 
 	QR_ENTRY_UNKNOWN	=	0xff
 }QR_ENTRY_t;
@@ -152,6 +156,11 @@ typedef enum BarCodeType{
 	T_UNKNOWN	=	0xff,
 }BarCodeType_t;
 
+typedef enum tagDecodeSource{
+	DECODE_FROM_CAMERA	=	0,
+	DECODE_FROM_FILE	=	1,
+}DecodeSource_t;
+
 class UiOption : public UiButton
 {
 public:
@@ -164,8 +173,8 @@ protected:
         SetBkMode(hdcDst,TRANSPARENT);
         RECT rcStatus = {prcWin->left + 5,prcWin->top,prcWin->left + 30, prcWin->bottom};
 		MzDrawControl(hdcDst, &rcStatus,  bSelected ? MZC_SELECTED : MZC_UNSELECTED, 0);
-        RECT rcText = {rcStatus.right + 5, prcWin->top, prcWin->right, prcWin->bottom};
-        MzDrawText(hdcDst,GetText(),&rcText,GetDrawTextFormat());
+        RECT rcText = {rcStatus.right + 10, prcWin->top, prcWin->right, prcWin->bottom};
+        MzDrawText(hdcDst,GetText(),&rcText,DT_LEFT|DT_VCENTER);
 	}
 private:
 	bool bSelected;
@@ -176,13 +185,19 @@ class Ui_CaptureWnd : public CMzWndEx {
 public:
 	Ui_CaptureWnd();
 	~Ui_CaptureWnd();
-
+public:
+	void setDecodeSource(DecodeSource_t src){
+		m_source = src;
+	}
+protected:
+	bool GetImageFile();
+	bool InitCameraDevice();
     bool StartDecode();
 	void adjustCameraPos(){
         RECT rcCameraSquare = {(GetWidth() - 240)/2,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2,
 						(GetWidth() - 240)/2 + 240,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2 + 240};
-        RECT rcCameraRect = {(GetWidth() - 320)/2,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2,
-						(GetWidth() - 320)/2 + 320,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2 + 240};
+        RECT rcCameraRect = {(GetWidth() - 400)/2,(GetHeight() - 200 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2,
+						(GetWidth() - 400)/2 + 400,(GetHeight() - 200 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2 + 200};
         if(m_bartype == T_BAR_CODE){
             m_rcCamera = rcCameraRect;
         }else{
@@ -191,9 +206,8 @@ public:
         this->Invalidate();
         this->UpdateWindow();
 	}
-	void PaintWin(HDC hdc, RECT* prcUpdate = NULL);
 public:
-	ICameraDeviceInterface *m_pDevice;
+	void PaintWin(HDC hdc, RECT* prcUpdate = NULL);
 protected:
     // Initialization of the window (dialog)
     virtual BOOL OnInitDialog();
@@ -205,8 +219,8 @@ protected:
     virtual void OnMzCommand(WPARAM wParam, LPARAM lParam);
 private:	//PtAPI
 	void InitPtApi(){
-		int ret = PtQRDecodeRegister    ("18210708290105166561");//demo
-		ret = PtDMDecodeRegister    ("18310708290105222081");//demo
+		int ret = PtQRDecodeRegister("18210708290105166561");//demo
+		ret = PtDMDecodeRegister("18310708290105222081");//demo
 		InitBarCodeInfo();
 		PtInitImage(&m_image);
 		memset( &m_para, 0 ,sizeof(m_para) );
@@ -225,17 +239,20 @@ private:
    INTRATOTALBARCODEINFO     m_BarInfo;
    PTIMAGE                   m_image;
    PTDECODEPARA              m_para;
-//   float                     m_scale;
 private:
 	bool isInitialized;
     bool isPaused;
 	RECT m_rcCamera;
+	RECT m_rcScanRegion;
 	UiToolbar_Text m_Toolbar;
     UiOption m_OptionQR;
     UiOption m_OptionDM;
     UiOption m_OptionBAR;
     BarCodeType_t m_bartype;
     MzBarDecoder decoder;
+	ICameraDeviceInterface *m_pDevice;
+	DecodeSource_t m_source;
+	wchar_t* m_ImageFile;
 };
 
 // Main window derived from CMzWndEx

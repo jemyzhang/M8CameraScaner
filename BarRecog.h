@@ -26,7 +26,7 @@ private:
 	CMzString strCodeNumber; 
 	CMzString strCodeStyle; 
 	BOOL PreProcess(void); 
-	BOOL Recognize(); 
+	BOOL Recognize(BYTE* pcode, DWORD* pnsize); 
  
 	//成员变量 
 	BYTE** ImageArray;				//原始的图像数据数组－灰度 
@@ -53,7 +53,7 @@ private:
     void GrayImage(RECT *prcRegion);
 public:
     //Decode From File
-    BOOL DecodeFromFile(PCTSTR FileName,DECODEPARA_ptr pPara = NULL);
+    BOOL DecodeFromFile(PCTSTR FileName,BYTE* code, DWORD* pnsize,DECODEPARA_ptr pPara = NULL);
  
 protected:	 
 	int arDelta[1000]; 

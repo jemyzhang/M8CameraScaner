@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="dmtxce"
+	Name="BarCodeScanner"
 	ProjectGUID="{831D64AC-E7DE-4EB2-AAF2-66080358071F}"
-	RootNamespace="dmtxce"
+	RootNamespace="BarCodeScanner"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -64,12 +64,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions=" /subsystem:windowsce,6.00 /machine:ARM /ARMPADCODE /MACHINE:THUMB "
-				AdditionalDependencies="mzfc.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
-				OutputFile="$(OutDir)/dmtxce.exe"
+				AdditionalDependencies="mzfc.lib PlatformApi.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
+				OutputFile="$(OutDir)/BarCodeScanner.exe"
 				LinkIncremental="2"
 				DelayLoadDLLs="$(NOINHERIT)"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/dmtxce.pdb"
+				ProgramDatabaseFile="$(OutDir)/BarCodeScanner.pdb"
 				SubSystem="0"
 				StackReserveSize="65536"
 				StackCommitSize="4096"
@@ -151,12 +151,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions=" /subsystem:windowsce,6.00"
-				AdditionalDependencies="mzfc.lib strmiids.lib strmbase.lib libdmtxce.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
-				OutputFile="$(OutDir)/dmtxce.exe"
+				AdditionalDependencies="mzfc.lib PlatformApi.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
+				OutputFile="$(OutDir)/BarCodeScanner.exe"
 				LinkIncremental="1"
 				DelayLoadDLLs="$(NOINHERIT)"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/dmtxce.pdb"
+				ProgramDatabaseFile="$(OutDir)/BarCodeScanner.pdb"
 				SubSystem="0"
 				StackReserveSize="65536"
 				StackCommitSize="4096"
@@ -202,15 +202,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\BarCodeScanner.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\BarRecog.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Dib.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\dmtxce.cpp"
 				>
 			</File>
 			<File
@@ -236,15 +236,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\BarCodeScanner.h"
+				>
+			</File>
+			<File
 				RelativePath=".\BarRecog.h"
 				>
 			</File>
 			<File
 				RelativePath=".\Dib.h"
-				>
-			</File>
-			<File
-				RelativePath=".\dmtxce.h"
 				>
 			</File>
 			<File

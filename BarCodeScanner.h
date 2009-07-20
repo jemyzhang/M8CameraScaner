@@ -12,7 +12,7 @@
 #define APPNAME L"DMTXCE"
 
 // Application class derived from CMzApp
-class M8Dmtx : public CMzApp {
+class M8BarCodeScanner : public CMzApp {
 public:
 	Ui_MainWnd m_MainWnd;
 	// Initialization of the application

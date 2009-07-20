@@ -45,9 +45,9 @@ MzBarDecoder::~MzBarDecoder()
 	}
 }
 
-BOOL MzBarDecoder::DecodeFromFile(PCTSTR FileName,DECODEPARA_ptr pPara){
+BOOL MzBarDecoder::DecodeFromFile(PCTSTR FileName,BYTE* pcode, DWORD* pnsize, DECODEPARA_ptr pPara){
     BOOL bRet = false;
-    if(FileName == NULL) return bRet;
+    if(FileName == NULL || pcode == NULL) return bRet;
 
     DECODEPARA_t param;
     if(pPara == NULL) {
@@ -57,12 +57,18 @@ BOOL MzBarDecoder::DecodeFromFile(PCTSTR FileName,DECODEPARA_ptr pPara){
     }else{
         param.dwThrehold = pPara->dwThrehold;
         param.dwScanRegion = pPara->dwScanRegion;
+		if(param.dwScanRegion.right == 0){
+			param.dwScanRegion.right = m_dib.GetImageWidth();
+		}
+		if(param.dwScanRegion.bottom == 0){
+			param.dwScanRegion.bottom = m_dib.GetImageHeight();
+		}
     }
     if(LoadImage(FileName)){
         GrayImage(&param.dwScanRegion);
         BinaryImage(param.dwThrehold);
         if(PreProcess()){
-            bRet = Recognize();
+            bRet = Recognize(pcode,pnsize);
         }
     }
     return bRet;
@@ -173,6 +179,7 @@ BOOL MzBarDecoder::PreProcess()
         arPixelV[i]=0;
     for(i=0; i<ImageWidth; i++)
         arPixelH[i]=0;
+
 	for(i=0; i<ImageHeight; i++)
 	{
 		for(j=0; j<ImageWidth; j++)
@@ -274,8 +281,8 @@ BOOL MzBarDecoder::PreProcess()
 		}
 	}
 	
-    double rate = (double)iCount/(ImageBottom-ImageTop);
-	if( ((double)iCount/(ImageBottom-ImageTop))<0.6 )
+    double imageH = ImageBottom-ImageTop;
+	if( imageH == 0 || ((double)iCount/imageH)<0.6 )
 		return false;
 	
 	//调整起点
@@ -463,7 +470,7 @@ BOOL MzBarDecoder::PreProcess()
 /******************************************************************************  
 * 识别  
 ******************************************************************************/
-BOOL MzBarDecoder::Recognize()
+BOOL MzBarDecoder::Recognize(BYTE* pcode, DWORD* pnsize)
 {
 	//总共有7×12＋3×2＋5＝ 95个单位宽度
 	//有4×12＋3×2＋5＝59个宽度，
@@ -497,33 +504,51 @@ BOOL MzBarDecoder::Recognize()
 		result[i] = JudgNum(arWidth[i*4+8], arWidth[i*4+9], arWidth[i*4+10], arWidth[i*4+11], mx);
 	}
 
-    //判断码制
-    if( result[0]==7 && result[1]==7 )
-    {
-        strCodeStyle = L"ISSN";
-    }
-    else if( result[0]==7 && result[1]==8 )
-    {
-        strCodeStyle = L"ISBN";
-    }
-    else
-        strCodeStyle = L"Unknown!";
-
     //判断是否全部识别出来
     for(i=0; i<12; i++)
         if(result[i] == -1)
             return false;
 
-    CMzString strTemp;
-    RETAILMSG(1,(L"%s:",strCodeStyle.C_Str()));
-    //strCodeNumber.Format("");
+	DWORD codestrlen = 0;
+	BYTE* pcodestr = pcode;
+	*pcodestr++ = 0x1;
+	*pcodestr++ = 0x20;
+	strcpy((char*)pcodestr,"LBAR:T:");
+	pcodestr += 7;
+	codestrlen += 9;
+	//判断码制
+    if( result[0]==7 && result[1]==7 )
+    {
+        strcpy((char*)pcodestr,"ISSN");
+		codestrlen += 4;
+    }
+    else if( result[0]==7 && result[1]==8 )
+    {
+        strcpy((char*)pcodestr,"ISBN");
+		codestrlen += 4;
+    }
+    else
+	{
+        strcpy((char*)pcodestr,"Unknown!");
+		codestrlen += 8;
+	}
+	pcodestr += 8;
+
+	strcpy((char*)pcodestr,";CODE:");
+	codestrlen += 6;
+
+	pcodestr += 6;
+
     for(i=0; i<12; i++)
     {
-        RETAILMSG(1,(L"%d,",result[i]));
-        //strTemp.Format("%d", result[i]);
-        //strCodeNumber += strTemp;
+		*pcodestr++ = result[i] + '0';
     }
-    RETAILMSG(1,(L"\n"));
+	codestrlen += 12;
+
+	*pcodestr++ = ';';
+	*pcodestr++ = ';';
+	codestrlen += 2;
+	if(pnsize) *pnsize = codestrlen;
     return true;
 }
 
