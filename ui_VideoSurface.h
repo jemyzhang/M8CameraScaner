@@ -16,6 +16,12 @@ public:
 	wchar_t* getCapturePath(){
 		return m_ImageFile;
 	}
+    RECT getCameraRegion(){
+        return m_rcCamera;
+    }
+    BarCodeType_t getDecodeType(){
+        return m_type;
+    }
 public:
 	void PaintWin(HDC hdc, RECT* prcUpdate = NULL);
 	void OnTimer(UINT nIDEvent);

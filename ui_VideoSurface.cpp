@@ -75,20 +75,31 @@ wchar_t* osdStr[] = {
 };
 void ui_VideoSurface::PaintWin(HDC hdc, RECT* prcUpdate){
 	RotateScreen(SCREEN_ORIENTATION_90);    //保持横屏
-	HBRUSH myBrush = CreateSolidBrush(RGB(16,0,16));
-	FillRect(hdc,&m_rcCamera,myBrush);
+    ::DrawRect(hdc,&m_rcCamera,RGB(128,255,128),RGB(16,0,16));
+    HPEN pen = CreatePen(PS_SOLID, 2,RGB(128,255,128));
+    HPEN oldpen = (HPEN)::SelectObject(hdc,pen);
+    int x1 = m_rcCamera.left + RECT_WIDTH(m_rcCamera)/2 - 15;
+    int y1 = m_rcCamera.top + RECT_HEIGHT(m_rcCamera)/2 - 15;
+    ::MoveToEx(hdc,x1,y1 + 15,NULL);
+    ::LineTo(hdc,x1 + 30, y1 + 15);
+    ::MoveToEx(hdc,x1 + 15,y1,NULL);
+    ::LineTo(hdc,x1 + 15, y1 + 30);
+    //::DrawColorLine(hdc,x1,y1 + 10,x1 + 20, y1 + 10,RGB(128,255,128));
+    //::DrawColorLine(hdc,x1 + 10,y1,x1 + 10, y1 + 20,RGB(128,255,128));
+    ::SelectObject(hdc,oldpen);
+    ::DeleteObject(pen);
 	if(fadeinStep){
 		fadeinStep--;
 		HFONT font = FontHelper::GetFont(42,500,0,0,FONT_ROTATION_FLAG_90);
 		::SelectObject(hdc,font);
 		COLORREF color = RGB(128,128 + 8*fadeinStep,128);
-		RECT rcText = {m_rcCamera.right + 20,
-						m_rcCamera.top - 20,
-						m_rcCamera.right + 300,
-						m_rcCamera.bottom + 20};
+        RECT rcText = { 10,
+						10,
+						GetHeight() - 10,
+						GetHeight() - 10};
 		::SetBkMode(hdc,TRANSPARENT);
 		::SetTextColor(hdc,color);
-		::DrawText(hdc,osdStr[m_type],lstrlen(osdStr[m_type]),&rcText,DT_CENTER | DT_BOTTOM);
+		::DrawText(hdc,osdStr[m_type],lstrlen(osdStr[m_type]),&rcText,DT_LEFT | DT_BOTTOM);
 		::DeleteObject(font);
 	}
 	CMzWndEx::PaintWin(hdc,prcUpdate);
@@ -190,6 +201,10 @@ void ui_VideoSurface::adjustCameraPos(){
 
 bool ui_VideoSurface::InitCameraDevice(){
 	if(isInitialized) return true;
+    ::RegisterShellMessage(m_hWnd,WM_MZSH_ENTRY_LOCKPHONE | WM_MZSH_READY_POWEROFF);
+    ::HoldShellUsingSomeKeyFunction(m_hWnd,MZ_HARDKEY_POWER);
+    ::SetScreenAlwaysOn(m_hWnd);
+    resetAutoOff();//60秒自动退出
 	MzBeginWaitDlg(m_hWnd,&m_rcCamera);
 	bool bRet = false;
 //	::CoInitializeEx(0, COINIT_MULTITHREADED);
@@ -221,10 +236,6 @@ bool ui_VideoSurface::InitCameraDevice(){
 			m_pDevice->StartPreview();
 			bRet = true;
 			m_pDevice->SetPreviewAreaAlphaValue(12);
-			::RegisterShellMessage(m_hWnd,WM_MZSH_ENTRY_LOCKPHONE | WM_MZSH_READY_POWEROFF);
-			::HoldShellUsingSomeKeyFunction(m_hWnd,MZ_HARDKEY_POWER);
-			::SetScreenAlwaysOn(m_hWnd);
-			resetAutoOff();//60秒自动退出
 		}
 	}
 	MzEndWaitDlg();

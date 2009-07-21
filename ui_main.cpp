@@ -43,7 +43,7 @@ BOOL Ui_MainWnd::OnInitDialog() {
 	// Then init the controls & other things in the window
 	int y = 0;
 
-	y = GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR_w720 - MZM_WIDTH_DELETE_BUTTON * 3;
+	y = GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR - MZM_WIDTH_DELETE_BUTTON * 3;
 	m_ButtonCapture.SetPos(GetWidth()/4,y,GetWidth()/2,MZM_WIDTH_DELETE_BUTTON);
 	m_ButtonCapture.SetText(L"ÉãÏñÍ·É¨Ãè");
 	m_ButtonCapture.SetID(MZ_IDC_BUTTON_CAPTURE);
@@ -55,9 +55,9 @@ BOOL Ui_MainWnd::OnInitDialog() {
 	m_ButtonLoadFile.SetID(MZ_IDC_BUTTON_LOAD);
 	AddUiWin(&m_ButtonLoadFile);
 
-	m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR_w720, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR_w720);
+	m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR);
 	m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
-    m_Toolbar.SetTextBarType(TEXT_TOOLBAR_TYPE_720);
+//    m_Toolbar.SetTextBarType(TEXT_TOOLBAR_TYPE_720);
 	m_Toolbar.SetButton(2, true, true, L"ÍË³ö");
 	AddUiWin(&m_Toolbar);
 
@@ -83,7 +83,6 @@ void Ui_MainWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 					m_pCapture = new ui_VideoSurface;//Ui_CaptureWnd;
 				}
 				RotateScreen(SCREEN_ORIENTATION_90);    //ºáÆÁ
-				//m_pCapture->setDecodeSource(DECODE_FROM_CAMERA);
 				RECT rcWork = MzGetWorkArea();
 				m_pCapture->Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
 				int nRet = m_pCapture->DoModal();
@@ -97,7 +96,8 @@ void Ui_MainWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 						m_pDecode = new Ui_CaptureWnd;
 					}
 					m_pDecode->setDecodeSource(DECODE_FROM_CAMERA);
-					//TODO: m_pDecode->SetScanRegion();
+                    m_pDecode->SetScanRegion(m_pCapture->getCameraRegion());
+                    m_pDecode->SetDecodeType(m_pCapture->getDecodeType());
 					m_pDecode->SetImageFile(m_ImageFile);
 					RECT rcWork = MzGetWorkArea();
 					m_pDecode->Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);

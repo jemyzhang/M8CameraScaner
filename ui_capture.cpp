@@ -177,14 +177,18 @@ Ui_CaptureWnd::~Ui_CaptureWnd(){
 }
 
 void Ui_CaptureWnd::PaintWin(HDC hdc, RECT* prcUpdate){
-	if(m_source == DECODE_FROM_CAMERA){
-	}else if(m_source == DECODE_FROM_FILE){
 		if(m_ImageFile){
 			ImagingHelper image;
 			image.LoadImageW(m_ImageFile,true,true);
-//			image.Draw(hdc,&m_rcCamera,true,false);
+            if(m_source == DECODE_FROM_FILE){
+    			image.Draw(hdc,&m_rcDisplay,true,false);
+            }else{
+                HDC hScrDC = image.GetDC();
+                // copy the screen dc to the memory dc
+                BitBlt(hdc, m_rcDisplay.left, m_rcDisplay.top, RECT_WIDTH(m_rcDisplay), RECT_HEIGHT(m_rcDisplay), 
+                    hScrDC, m_rcScanRegion.left,m_rcScanRegion.top, SRCCOPY);
+            }
 		}
-	}
 
     CMzWndEx::PaintWin(hdc,prcUpdate);
 }
@@ -196,33 +200,34 @@ BOOL Ui_CaptureWnd::OnInitDialog() {
         return FALSE;
     }
 	if(m_source == DECODE_FROM_FILE){
-		m_OptionQR.SetPos(5,GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR_w720 - MZM_HEIGHT_SINGLELINE_EDIT,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
+		m_OptionQR.SetPos(5,GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR - MZM_HEIGHT_SINGLELINE_EDIT,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
 		m_OptionQR.SetStatus(true);
 		m_OptionQR.SetText(L"QR CODE");
 		m_OptionQR.SetID(MZ_IDC_OPTION_QR);
 		AddUiWin(&m_OptionQR);
 
-		m_OptionDM.SetPos(5,GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR_w720 - MZM_HEIGHT_SINGLELINE_EDIT*2,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
+		m_OptionDM.SetPos(5,GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR - MZM_HEIGHT_SINGLELINE_EDIT*2,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
 		m_OptionDM.SetStatus(false);
 		m_OptionDM.SetText(L"DM CODE");
 		m_OptionDM.SetID(MZ_IDC_OPTION_DM);
 		AddUiWin(&m_OptionDM);
 
-		m_OptionBAR.SetPos(5,GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR_w720 - MZM_HEIGHT_SINGLELINE_EDIT*3,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
+		m_OptionBAR.SetPos(5,GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR - MZM_HEIGHT_SINGLELINE_EDIT*3,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
 		m_OptionBAR.SetStatus(false);
 		m_OptionBAR.SetText(L"BAR CODE");
 		m_OptionBAR.SetID(MZ_IDC_OPTION_BAR);
 		AddUiWin(&m_OptionBAR);
 
-		m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR_w720, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR_w720);
+		m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR);
 		m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
-		m_Toolbar.SetTextBarType(TEXT_TOOLBAR_TYPE_720);
+//		m_Toolbar.SetTextBarType(TEXT_TOOLBAR_TYPE_720);
 		m_Toolbar.SetButton(1, true, true, L"½âÂë");
 		m_Toolbar.SetButton(0, true, true, L"·µ»Ø");
 		AddUiWin(&m_Toolbar);
 	}else{
 		SetTimer(m_hWnd,0x1001,100,NULL);
 	}
+    UpdateDisplayArea();
 
     return TRUE;
 }
@@ -308,7 +313,40 @@ bool Ui_CaptureWnd::StartDecode(){
 void Ui_CaptureWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 	UINT_PTR id = LOWORD(wParam);
 	switch (id) {
-		case MZ_IDC_TOOLBAR_MAIN:
+        case MZ_IDC_OPTION_BAR:
+            {
+                if(!m_OptionBAR.GetStatus()){
+                    m_OptionBAR.SetStatus(true);
+                    m_OptionQR.SetStatus(false);
+                    m_OptionDM.SetStatus(false);
+                    m_bartype = T_BAR_CODE;
+                    UpdateDisplayArea();
+                }
+                break;
+            }
+        case MZ_IDC_OPTION_QR:
+            {
+                if(!m_OptionQR.GetStatus()){
+                    m_OptionQR.SetStatus(true);
+                    m_OptionBAR.SetStatus(false);
+                    m_OptionDM.SetStatus(false);
+                    m_bartype = T_QR_CODE;
+                    UpdateDisplayArea();
+                }
+                break;
+            }
+        case MZ_IDC_OPTION_DM:
+            {
+                if(!m_OptionDM.GetStatus()){
+                    m_OptionDM.SetStatus(true);
+                    m_OptionBAR.SetStatus(false);
+                    m_OptionQR.SetStatus(false);
+                    m_bartype = T_DATAMATRIX_CODE;
+                    UpdateDisplayArea();
+                }
+                break;
+            }
+        case MZ_IDC_TOOLBAR_MAIN:
 			{
 				int nIndex = lParam;
 				if(nIndex == 0){

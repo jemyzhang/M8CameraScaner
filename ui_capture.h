@@ -191,6 +191,31 @@ public:
 	void SetScanRegion(RECT rc){
 		m_rcScanRegion = rc;
 	}
+    void SetDecodeType(BarCodeType_t t){
+        m_bartype = t;
+    }
+    void UpdateDisplayArea(){
+        int width = RECT_WIDTH(m_rcScanRegion);
+        int height = RECT_HEIGHT(m_rcScanRegion);
+        if(width == 0 || height == 0){
+	        RECT rcSquare = {(GetWidth() - 320)/2,(GetHeight() - 320)/2 - 100,
+		        (GetWidth() - 320)/2 + 320,(GetHeight() - 320)/2 - 100 + 320};
+	        RECT rcRect = {(GetWidth() - 400)/2,(GetHeight() - 200)/2 - 100,
+		        (GetWidth() - 400)/2 + 400,(GetHeight() - 200)/2 - 100 + 200};
+	        if(m_bartype == T_BAR_CODE){
+		        m_rcDisplay = rcRect;
+	        }else{
+		        m_rcDisplay = rcSquare;
+	        }
+        }else{
+            m_rcDisplay.left = (GetWidth() - width)>>1;
+            m_rcDisplay.top = (GetHeight() - 200 - height)>>1;
+            m_rcDisplay.right = m_rcDisplay.left + width;
+            m_rcDisplay.bottom = m_rcDisplay.top + height;
+        }
+        this->Invalidate();
+        this->UpdateWindow();
+    }
 protected:
     bool StartDecode();
 public:
@@ -237,6 +262,7 @@ private:
 	bool isInitialized;
     bool isPaused;
 	RECT m_rcScanRegion;
+    RECT m_rcDisplay;
 	UiToolbar_Text m_Toolbar;
     UiOption m_OptionQR;
     UiOption m_OptionDM;
