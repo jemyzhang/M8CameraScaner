@@ -96,7 +96,14 @@ void Ui_MainWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 						m_pDecode = new Ui_CaptureWnd;
 					}
 					m_pDecode->setDecodeSource(DECODE_FROM_CAMERA);
-                    m_pDecode->SetScanRegion(m_pCapture->getCameraRegion());
+                    RECT rc = m_pCapture->getCameraRegion();
+                    //×ª»»ÎªÊúÆÁ×ø±ê
+                    RECT rcNew;
+                    rcNew.left = GetWidth() - RECT_HEIGHT(rc) - rc.top;
+                    rcNew.right = GetWidth() - rc.top;
+                    rcNew.top = rc.left;
+                    rcNew.bottom = rc.left + RECT_WIDTH(rc);
+                    m_pDecode->SetScanRegion(rcNew);
                     m_pDecode->SetDecodeType(m_pCapture->getDecodeType());
 					m_pDecode->SetImageFile(m_ImageFile);
 					RECT rcWork = MzGetWorkArea();
