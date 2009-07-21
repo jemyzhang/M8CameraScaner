@@ -3,8 +3,6 @@
 
 // include the MZFC library header file
 #include <mzfc_inc.h>
-#include <ICameraApp.h> 
-#include <ICameraDeviceInterface.h>
 
 #include "PtAPICE.h"
 #include "BarRecog.h"
@@ -152,7 +150,7 @@ typedef struct QRCODE_NAMES{
 typedef enum BarCodeType{
 	T_QR_CODE	=	0,
 	T_DATAMATRIX_CODE	=	1,
-    T_BAR_CODE  =   3,
+    T_BAR_CODE  =   2,
 	T_UNKNOWN	=	0xff,
 }BarCodeType_t;
 
@@ -189,25 +187,21 @@ public:
 	void setDecodeSource(DecodeSource_t src){
 		m_source = src;
 	}
-protected:
-	bool GetImageFile();
-	bool InitCameraDevice();
-    bool StartDecode();
-	void adjustCameraPos(){
-        RECT rcCameraSquare = {(GetWidth() - 240)/2,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2,
-						(GetWidth() - 240)/2 + 240,(GetHeight() - 240 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2 + 240};
-        RECT rcCameraRect = {(GetWidth() - 400)/2,(GetHeight() - 200 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2,
-						(GetWidth() - 400)/2 + 400,(GetHeight() - 200 - MZM_HEIGHT_TEXT_TOOLBAR_w720)/2 + 200};
-        if(m_bartype == T_BAR_CODE){
-            m_rcCamera = rcCameraRect;
-        }else{
-            m_rcCamera = rcCameraSquare;
-        }
-        this->Invalidate();
-        this->UpdateWindow();
+	void SetImageFile(wchar_t* f);
+	void SetScanRegion(RECT rc){
+		m_rcScanRegion = rc;
 	}
+protected:
+    bool StartDecode();
 public:
 	void PaintWin(HDC hdc, RECT* prcUpdate = NULL);
+	virtual int DoModal(){
+		if(m_source == DECODE_FROM_CAMERA){
+			reqDecode = true;
+		}
+		return CMzWndEx::DoModal();
+	}
+	void OnTimer(UINT nIDEvent);
 protected:
     // Initialization of the window (dialog)
     virtual BOOL OnInitDialog();
@@ -242,7 +236,6 @@ private:
 private:
 	bool isInitialized;
     bool isPaused;
-	RECT m_rcCamera;
 	RECT m_rcScanRegion;
 	UiToolbar_Text m_Toolbar;
     UiOption m_OptionQR;
@@ -250,9 +243,9 @@ private:
     UiOption m_OptionBAR;
     BarCodeType_t m_bartype;
     MzBarDecoder decoder;
-	ICameraDeviceInterface *m_pDevice;
 	DecodeSource_t m_source;
 	wchar_t* m_ImageFile;
+	bool reqDecode;
 };
 
 // Main window derived from CMzWndEx

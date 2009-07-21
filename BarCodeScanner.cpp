@@ -6,18 +6,18 @@
 M8BarCodeScanner theApp;
 HINSTANCE LangresHandle;
 HINSTANCE ImgresHandle;
-//ImagingHelper *pimg[IDB_PNG_END - IDB_PNG_BEGIN + 1];
+ImagingHelper *pimg[IDB_PNG_END - IDB_PNG_BEGIN + 1];
 //ImagingHelper *imgArrow;
 //AppConfigIni appconfig;
 
 
 void M8BarCodeScanner::loadImageRes(){
-	/*
 	ImgresHandle = MzGetInstanceHandle();
 	for(int i = 0; i < sizeof(pimg) / sizeof(pimg[0]); i++){
 		pimg[i] = LOADIMAGE(IDB_PNG_BEGIN + i);
 	}
-	HINSTANCE MzresHandle = GetMzResModuleHandle();
+
+/*	HINSTANCE MzresHandle = GetMzResModuleHandle();
 	imgArrow = ImagingHelper::GetImageObject(MzresHandle, MZRES_IDR_PNG_ARROW_RIGHT, true);
 	*/
 }
@@ -45,7 +45,7 @@ BOOL M8BarCodeScanner::Init() {
     CoInitializeEx(0, COINIT_MULTITHREADED);
 
     //载入资源
-    //LoadRes();
+    LoadRes();
     //检测程序是否已经运行
     HWND pWnd = isRuning();
     if(pWnd)
@@ -55,7 +55,7 @@ BOOL M8BarCodeScanner::Init() {
         PostQuitMessage(0);
         return true; 
     }
-    RotateScreen(0);    //横屏
+//    RotateScreen(SCREEN_ORIENTATION_90);    //横屏
 
     // Create the main window
     RECT rcWork = MzGetWorkArea();

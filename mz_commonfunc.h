@@ -13,7 +13,14 @@ typedef enum TextEncode{
 #define LOADIMAGE(nID)	ImagingHelper::GetImageObject(ImgresHandle,nID)
 #define LOADSTRING(uID)	MzLoadString(uID,LangresHandle)
 
-bool RotateScreen(DWORD orientation);
+typedef enum tagScreenOrientation{
+	SCREEN_ORIENTATION_0		=	1,
+	SCREEN_ORIENTATION_90		=	0,
+}ScreenOrientation_t;
+
+bool RotateScreen(ScreenOrientation_t orientation);
+
+void EnterFullScreen(bool full);
 
 class MZ_CommonC
 {

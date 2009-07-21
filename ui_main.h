@@ -5,6 +5,7 @@
 #include <mzfc_inc.h>
 // Main window derived from CMzWndEx
 #include "ui_capture.h"
+#include "ui_VideoSurface.h"
 
 class Ui_MainWnd : public CMzWndEx {
     MZ_DECLARE_DYNAMIC(Ui_MainWnd);
@@ -15,7 +16,9 @@ public:
 
 public:
     UiToolbar_Text m_Toolbar;
-    Ui_CaptureWnd *m_pCapture;
+    //Ui_CaptureWnd *m_pCapture;
+	ui_VideoSurface *m_pCapture;
+	Ui_CaptureWnd *m_pDecode;
 	UiButton m_ButtonCapture;
 	UiButton m_ButtonLoadFile;
 protected:
@@ -27,8 +30,12 @@ protected:
 
     // override the MZFC command handler
     virtual void OnMzCommand(WPARAM wParam, LPARAM lParam);
-
 	bool OnShellMessage(UINT message, WPARAM wParam, LPARAM lParam);
+protected:
+	bool GetImageFile();
+private:
+	wchar_t* m_ImageFile;
+
 };
 
 

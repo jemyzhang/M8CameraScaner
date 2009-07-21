@@ -2,7 +2,9 @@
 #include <fstream>
 using namespace std;
 
-bool RotateScreen(DWORD orientation){
+#include <ShellNotifyMsg.h>
+
+bool RotateScreen(ScreenOrientation_t orientation){
     bool bRet = true;
 	DEVMODE  DevMode;
 	memset(&DevMode, 0, sizeof(DevMode));
@@ -16,6 +18,14 @@ bool RotateScreen(DWORD orientation){
         bRet = false;
 	}
     return bRet;
+}
+
+void EnterFullScreen(bool full){
+	if(full){
+		HideMzTopBar();
+	}else{
+		ShowMzTopBar();
+	}
 }
 
 int MZ_CommonDateTime::getWeekDay(int year,int month, int day){

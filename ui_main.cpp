@@ -2,17 +2,23 @@
 #include "resource.h"
 #include "mz_commonfunc.h"
 using namespace MZ_CommonFunc;
+#include <ShellNotifyMsg.h>
+#include <InitGuid.h>
+#include <IMzUnknown.h>
+#include <IMzUnknown_IID.h>
+#include <IFileBrowser.h>
+#include <IFileBrowser_GUID.h>
 
 #define MZ_IDC_TOOLBAR_MAIN		101
 #define MZ_IDC_BUTTON_CAPTURE	102
 #define MZ_IDC_BUTTON_LOAD		103
-#include <ShellNotifyMsg.h>
 
 
 MZ_IMPLEMENT_DYNAMIC(Ui_MainWnd)
 
 Ui_MainWnd::Ui_MainWnd(){
     m_pCapture = NULL;
+	m_pDecode = NULL;
 }
 
 Ui_MainWnd::~Ui_MainWnd(){
@@ -20,11 +26,11 @@ Ui_MainWnd::~Ui_MainWnd(){
         delete m_pCapture;
         m_pCapture = NULL;
     }
-    RotateScreen(1);
+	::UnRegisterShellMessage(m_hWnd,::GetShellNotifyMsg_EntryLockPhone() | ::GetShellNotifyMsg_ReadyPowerOFF());
 }
 
 void Ui_MainWnd::PaintWin(HDC hdc, RECT* prcUpdate){
-    RotateScreen(0);    //±£³ÖºáÆÁ
+    //RotateScreen(SCREEN_ORIENTATION_90);    //±£³ÖºáÆÁ
     CMzWndEx::PaintWin(hdc,prcUpdate);
 }
 
@@ -38,13 +44,13 @@ BOOL Ui_MainWnd::OnInitDialog() {
 	int y = 0;
 
 	y = GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR_w720 - MZM_WIDTH_DELETE_BUTTON * 3;
-	m_ButtonCapture.SetPos(GetWidth()/3,y,GetWidth()/3,MZM_WIDTH_DELETE_BUTTON);
+	m_ButtonCapture.SetPos(GetWidth()/4,y,GetWidth()/2,MZM_WIDTH_DELETE_BUTTON);
 	m_ButtonCapture.SetText(L"ÉãÏñÍ·É¨Ãè");
 	m_ButtonCapture.SetID(MZ_IDC_BUTTON_CAPTURE);
 	AddUiWin(&m_ButtonCapture);
 
 	y += MZM_WIDTH_DELETE_BUTTON;
-	m_ButtonLoadFile.SetPos(GetWidth()/3,y,GetWidth()/3,MZM_WIDTH_DELETE_BUTTON);
+	m_ButtonLoadFile.SetPos(GetWidth()/4,y,GetWidth()/2,MZM_WIDTH_DELETE_BUTTON);
 	m_ButtonLoadFile.SetText(L"´ÓÎÄ¼þ¶ÁÈ¡");
 	m_ButtonLoadFile.SetID(MZ_IDC_BUTTON_LOAD);
 	AddUiWin(&m_ButtonLoadFile);
@@ -55,13 +61,13 @@ BOOL Ui_MainWnd::OnInitDialog() {
 	m_Toolbar.SetButton(2, true, true, L"ÍË³ö");
 	AddUiWin(&m_Toolbar);
 
-	::RegisterShellMessage(m_hWnd,WM_MZSH_ENTRY_LOCKPHONE |WM_MZSH_LEAVE_LOCKPHONE);
-
+	::RegisterShellMessage(m_hWnd, ::GetShellNotifyMsg_EntryLockPhone() | ::GetShellNotifyMsg_ReadyPowerOFF());
 	return TRUE;
 }
 
 
 LRESULT Ui_MainWnd::MzDefWndProc(UINT message, WPARAM wParam, LPARAM lParam) {
+	if(OnShellMessage(message,wParam,lParam)) return 0;
 	return CMzWndEx::MzDefWndProc(message, wParam, lParam);
 }
 
@@ -71,28 +77,52 @@ void Ui_MainWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 	switch (id) {
 		case MZ_IDC_BUTTON_CAPTURE:
 			{
+				::EnterFullScreen(true);
+
 				if(m_pCapture == NULL){
-					m_pCapture = new Ui_CaptureWnd;
+					m_pCapture = new ui_VideoSurface;//Ui_CaptureWnd;
 				}
-				m_pCapture->setDecodeSource(DECODE_FROM_CAMERA);
+				RotateScreen(SCREEN_ORIENTATION_90);    //ºáÆÁ
+				//m_pCapture->setDecodeSource(DECODE_FROM_CAMERA);
 				RECT rcWork = MzGetWorkArea();
 				m_pCapture->Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
-				m_pCapture->DoModal();
+				int nRet = m_pCapture->DoModal();
+				C::newstrcpy(&m_ImageFile,m_pCapture->getCapturePath());
+				RotateScreen(SCREEN_ORIENTATION_0);    //ºáÆÁ
+				::EnterFullScreen(false);
+
+
+				if(nRet == ID_OK){
+					if(m_pDecode == NULL){
+						m_pDecode = new Ui_CaptureWnd;
+					}
+					m_pDecode->setDecodeSource(DECODE_FROM_CAMERA);
+					//TODO: m_pDecode->SetScanRegion();
+					m_pDecode->SetImageFile(m_ImageFile);
+					RECT rcWork = MzGetWorkArea();
+					m_pDecode->Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
+					m_pDecode->DoModal();
+					delete m_pDecode;
+					m_pDecode = NULL;
+				}
 				delete m_pCapture;
 				m_pCapture = NULL;
 				break;
 			}
 		case MZ_IDC_BUTTON_LOAD:
 			{
-				if(m_pCapture == NULL){
-					m_pCapture = new Ui_CaptureWnd;
+				if(GetImageFile()){
+					if(m_pDecode == NULL){
+						m_pDecode = new Ui_CaptureWnd;
+					}
+					m_pDecode->setDecodeSource(DECODE_FROM_FILE);
+					m_pDecode->SetImageFile(m_ImageFile);
+					RECT rcWork = MzGetWorkArea();
+					m_pDecode->Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
+					m_pDecode->DoModal();
+					delete m_pDecode;
+					m_pDecode = NULL;
 				}
-				m_pCapture->setDecodeSource(DECODE_FROM_FILE);
-				RECT rcWork = MzGetWorkArea();
-				m_pCapture->Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
-				m_pCapture->DoModal();
-				delete m_pCapture;
-				m_pCapture = NULL;
 				break;
 			}
 		case MZ_IDC_TOOLBAR_MAIN:
@@ -108,13 +138,46 @@ void Ui_MainWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 }
 
 bool Ui_MainWnd::OnShellMessage(UINT message, WPARAM wParam, LPARAM lParam){
-	if(message == ::GetShellNotifyMsg_EntryLockPhone() || message == ::GetShellNotifyMsg_ReadyPowerOFF()){
-		if(m_pCapture){
-			m_pCapture->EndModal(ID_CANCEL);
-			delete m_pCapture;
-			m_pCapture = NULL;
-		}
-		return true;
+	if(	message == ::GetShellNotifyMsg_EntryLockPhone() ||
+		message == ::GetShellNotifyMsg_ReadyPowerOFF()){
+			if(this->m_pCapture){
+				m_pCapture->EndModal(ID_CANCEL);
+				return true;
+			}else{
+				return false;
+			}
 	}
 	return false;
+}
+
+bool Ui_MainWnd::GetImageFile(){
+	bool nRet = false;
+	IFileBrowser *pFile = NULL;
+//	RotateScreen(SCREEN_ORIENTATION_0);
+	CoInitializeEx(NULL, COINIT_MULTITHREADED );
+	IMzSelect *pSelect = NULL; 
+	if ( SUCCEEDED( CoCreateInstance( CLSID_FileBrowser, NULL,CLSCTX_INPROC_SERVER ,IID_MZ_FileBrowser,(void **)&pFile ) ) )
+	{     
+		if( SUCCEEDED( pFile->QueryInterface( IID_MZ_Select, (void**)&pSelect ) ) )
+		{
+			TCHAR file[ MAX_PATH ] = { 0 };
+			pFile->SetParentWnd( m_hWnd );
+			pFile->SetOpenDirectoryPath( L"\\Disk" );
+			pFile->SetExtFilter( L"*.jpg;*.gif;*.png;*.bmp");                                      
+			pFile->SetOpenDocumentType(DOCUMENT_SELECT_SINGLE_FILE);
+			CMzString fileDlgTitle = L"Ñ¡ÔñÍ¼Æ¬";
+			pFile->SetTitle((TCHAR*)fileDlgTitle.C_Str());
+
+			if( pSelect->Invoke() ) 
+			{						
+				C::newstrcpy( &m_ImageFile, pFile->GetSelectedFileName() );
+				nRet = true;
+			}
+			pSelect->Release();
+		}     
+		pFile->Release();
+	}	
+	CoUninitialize();
+//	RotateScreen(SCREEN_ORIENTATION_90);
+	return nRet;
 }
