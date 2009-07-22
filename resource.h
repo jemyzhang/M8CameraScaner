@@ -4,8 +4,9 @@
 //
 #define IDB_PNG_BEGIN					101
 #define IDB_PNG_SHAPE                   101
-#define IDB_PNG_SHOT                    103
-#define IDB_PNG_EXIT                    104
+#define IDB_PNG_SHOT                    102
+#define IDB_PNG_EXIT                    103
+#define IDB_PNG_LOGO					104
 #define IDB_PNG_END                     104
 
 // 新对象的下一组默认值

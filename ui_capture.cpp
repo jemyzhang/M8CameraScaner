@@ -9,6 +9,7 @@ using namespace MZ_CommonFunc;
 #define MZ_IDC_OPTION_DM    103
 #define MZ_IDC_OPTION_BAR   104
 
+
 MZ_IMPLEMENT_DYNAMIC(Ui_CaptureWnd)
 
 wchar_t* chr2wch(const char* buffer, wchar_t** wbuf)
@@ -327,6 +328,8 @@ bool Ui_CaptureWnd::StartDecode(){
 			DWORD codelen;
 			if(decoder.DecodeFromFile(m_ImageFile,code,&codelen,&param)){
 				bdecode = 0;
+			}else{
+				bdecode = 2;
 			}
 			if(bdecode == 0){//解码完成
 				PTTOTALBARCODEINFO bar;
@@ -356,10 +359,12 @@ bool Ui_CaptureWnd::StartDecode(){
 		DateTime::waitms(200);
 	}
 	uiRefreshProgressBar(NULL,3,3);
-	if(bdecode){
+	if(bdecode == 1){
 		wchar_t errmsg[128];
-		wsprintf(errmsg,L"图像读取失败:%d",bdecode);
+		wsprintf(errmsg,L"图像数据错误");
 		MzAutoMsgBoxEx(m_hWnd,errmsg,2000);
+	}else if(bdecode == 2){
+		MzAutoMsgBoxEx(m_hWnd,L"图像分析错误，无法找到条码信息",2000);
 	}
 	PtFreeImage(&m_image);
 	if(m_source == DECODE_FROM_CAMERA){
@@ -715,6 +720,8 @@ void Ui_CaptureWnd::qrcodeAnaysis(const unsigned char* pcode,DWORD nsize,QRCODE_
 
 
 //////////////////////////////////////////////
+#define MZ_IDC_SCROLLBAR	102
+
 MZ_IMPLEMENT_DYNAMIC(Ui_ResultWnd)
 Ui_ResultWnd::~Ui_ResultWnd(){
     if(m_pMultiLineEdit) delete [] m_pMultiLineEdit;
@@ -732,13 +739,14 @@ BOOL Ui_ResultWnd::OnInitDialog() {
     AddUiWin(&m_Title);
 
     y+=MZM_HEIGHT_CAPTION;
-    m_ScrollWin.SetPos(0,y,GetWidth(),GetHeight() - y - MZM_HEIGHT_TEXT_TOOLBAR_w720);
+    m_ScrollWin.SetPos(0,y,GetWidth(),GetHeight() - y - MZM_HEIGHT_TEXT_TOOLBAR);
+	m_ScrollWin.SetID(MZ_IDC_SCROLLBAR);
     m_ScrollWin.EnableScrollBarV(true);
     AddUiWin(&m_ScrollWin);
 
-    m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR_w720, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR_w720);
+    m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR);
     m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
-    m_Toolbar.SetTextBarType(TEXT_TOOLBAR_TYPE_720);
+    //m_Toolbar.SetTextBarType(TEXT_TOOLBAR_TYPE_720);
     m_Toolbar.SetButton(1, true, true, L"OK");
     AddUiWin(&m_Toolbar);
 
@@ -816,4 +824,8 @@ void Ui_ResultWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
             }
     }
     CMzWndEx::OnMzCommand(wParam,lParam);
+}
+
+LRESULT Ui_ResultWnd::MzDefWndProc(UINT message, WPARAM wParam, LPARAM lParam) {
+    return CMzWndEx::MzDefWndProc(message, wParam, lParam);
 }

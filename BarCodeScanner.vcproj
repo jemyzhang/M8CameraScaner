@@ -233,6 +233,10 @@
 				RelativePath=".\ui_VideoSurface.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\UiImage.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Í·ÎÄ¼þ"
@@ -277,6 +281,10 @@
 			</File>
 			<File
 				RelativePath=".\ui_VideoSurface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UiImage.h"
 				>
 			</File>
 		</Filter>

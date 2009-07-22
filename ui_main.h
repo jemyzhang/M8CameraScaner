@@ -6,6 +6,7 @@
 // Main window derived from CMzWndEx
 #include "ui_capture.h"
 #include "ui_VideoSurface.h"
+#include "UiImage.h"
 
 class Ui_MainWnd : public CMzWndEx {
     MZ_DECLARE_DYNAMIC(Ui_MainWnd);
@@ -21,6 +22,8 @@ public:
 	Ui_CaptureWnd *m_pDecode;
 	UiButton m_ButtonCapture;
 	UiButton m_ButtonLoadFile;
+	UiMultiLineEdit m_TextAbout;
+	UiImage	m_Logo;
 protected:
     // Initialization of the window (dialog)
     virtual BOOL OnInitDialog();
