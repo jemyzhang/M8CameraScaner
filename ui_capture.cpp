@@ -183,14 +183,72 @@ void Ui_CaptureWnd::PaintWin(HDC hdc, RECT* prcUpdate){
             if(m_source == DECODE_FROM_FILE){
     			image.Draw(hdc,&m_rcDisplay,true,false);
             }else{
-                HDC hScrDC = image.GetDC();
-                // copy the screen dc to the memory dc
-                BitBlt(hdc, m_rcDisplay.left, m_rcDisplay.top, RECT_WIDTH(m_rcDisplay), RECT_HEIGHT(m_rcDisplay), 
-                    hScrDC, m_rcScanRegion.left,m_rcScanRegion.top, SRCCOPY);
+				drawRotate90(hdc,&m_rcScanRegion,&image);
             }
 		}
 
     CMzWndEx::PaintWin(hdc,prcUpdate);
+}
+
+void Ui_CaptureWnd::drawRotate90(HDC hdc,RECT *prc,ImagingHelper* pimg){
+	//prc == null
+	//image == null
+	if(prc == NULL || pimg == NULL) return;
+	//获取bitmap数据
+	int width = RECT_WIDTH(*prc);
+	int height = RECT_HEIGHT(*prc);
+	HDC hSrcDC = pimg->GetDC();
+	HDC hMemDC = ::CreateCompatibleDC(hSrcDC);
+	BYTE    *lpBitmapBitsSrc = NULL;
+
+	BITMAPINFO RGB24BitsBITMAPINFO;
+	ZeroMemory(&RGB24BitsBITMAPINFO, sizeof(BITMAPINFO));
+	RGB24BitsBITMAPINFO.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	RGB24BitsBITMAPINFO.bmiHeader.biWidth = width;
+	RGB24BitsBITMAPINFO.bmiHeader.biHeight = height;
+	RGB24BitsBITMAPINFO.bmiHeader.biPlanes = 1;
+	RGB24BitsBITMAPINFO.bmiHeader.biBitCount = 24;
+
+	HBITMAP hBitmap = ::CreateDIBSection(hMemDC, &RGB24BitsBITMAPINFO,
+		DIB_RGB_COLORS, (void **)&lpBitmapBitsSrc, NULL, 0);
+	::SelectObject(hMemDC, hBitmap);
+	::BitBlt(hMemDC,0,0,width,height,hSrcDC,prc->left,prc->top,SRCCOPY);
+
+	//90度翻转bitmap数据
+	//lp[h*(0:w-1) + (0:h-1)] = lpold[w*(1:h) - (1:w)]
+	int widthDest = height;
+	int heightDest = width;
+	BYTE    *lpBitmapBitsDest = new BYTE[widthDest*heightDest*3];
+	for(int iw = 0; iw < width; iw++){
+		for(int ih = 0; ih < height; ih++){
+			int ps = (width*(ih+1) - (iw+1))*3;
+			int pd = (height*iw + ih)*3;
+			lpBitmapBitsDest[pd + 0] = lpBitmapBitsSrc[ps + 0];	//B
+			lpBitmapBitsDest[pd + 1] = lpBitmapBitsSrc[ps + 1];	//G
+			lpBitmapBitsDest[pd + 2] = lpBitmapBitsSrc[ps + 2];	//R
+		}
+	}
+
+	//拷贝数据
+	ZeroMemory(&RGB24BitsBITMAPINFO, sizeof(BITMAPINFO));
+	RGB24BitsBITMAPINFO.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	RGB24BitsBITMAPINFO.bmiHeader.biWidth = widthDest;
+	RGB24BitsBITMAPINFO.bmiHeader.biHeight = heightDest;
+	RGB24BitsBITMAPINFO.bmiHeader.biPlanes = 1;
+	RGB24BitsBITMAPINFO.bmiHeader.biBitCount = 24;
+
+	::SetDIBitsToDevice(hdc,
+		m_rcDisplay.left,m_rcDisplay.top,
+		widthDest,heightDest,
+		0,0,0,heightDest,
+		lpBitmapBitsDest,
+		&RGB24BitsBITMAPINFO,DIB_RGB_COLORS);
+
+	//清理
+	delete []lpBitmapBitsSrc;
+	delete []lpBitmapBitsDest;
+	::ReleaseDC(m_hWnd,hMemDC);
+	::DeleteObject(hBitmap);
 }
 
 BOOL Ui_CaptureWnd::OnInitDialog() {

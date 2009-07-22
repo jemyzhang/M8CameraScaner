@@ -52,9 +52,9 @@ END
 // RCDATA
 //
 
-IDB_PNG_EXIT         RCDATA                  "image\\Exit.png"
-IDB_PNG_SHOT    RCDATA                  "image\\Shot.png"
-IDB_PNG_SHAPE    RCDATA                  "image\\Shape.png"
+IDB_PNG_EXIT            RCDATA                  "image\\Exit.png"
+IDB_PNG_SHOT           RCDATA                  "image\\Shot.png"
+IDB_PNG_SHAPE        RCDATA                  "image\\Shape.png"
 
 
 #endif    // 中文(中华人民共和国) resources

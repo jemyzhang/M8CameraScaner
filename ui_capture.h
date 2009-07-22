@@ -208,16 +208,17 @@ public:
 		        m_rcDisplay = rcSquare;
 	        }
         }else{
-            m_rcDisplay.left = (GetWidth() - width)>>1;
-            m_rcDisplay.top = (GetHeight() - 200 - height)>>1;
-            m_rcDisplay.right = m_rcDisplay.left + width;
-            m_rcDisplay.bottom = m_rcDisplay.top + height;
+            m_rcDisplay.left = (GetWidth() - height)>>1;
+            m_rcDisplay.top = (GetHeight() - 200 - width)>>1;
+            m_rcDisplay.right = m_rcDisplay.left + height;
+            m_rcDisplay.bottom = m_rcDisplay.top + width;
         }
         this->Invalidate();
         this->UpdateWindow();
     }
 protected:
     bool StartDecode();
+	void drawRotate90(HDC hdc,RECT *prc,ImagingHelper* image);
 public:
 	void PaintWin(HDC hdc, RECT* prcUpdate = NULL);
 	virtual int DoModal(){
