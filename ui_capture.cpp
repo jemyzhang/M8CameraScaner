@@ -466,6 +466,7 @@ const QRCODE_CONTENT_TAGS_t qrCardtags[] = {
     {QR_CARD_TEL		,'TEL'},
     {QR_CARD_FAX		,'FAX'},
     {QR_CARD_EMAIL		,'EM'},
+    {QR_CARD_IM			,'IM'},
     {QR_ENTRY_UNKNOWN	,0	},
 };
 const QRCODE_CONTENT_TAGS_t qrSmstags[] = {
@@ -518,10 +519,10 @@ const QRCODE_NAMES_t qrCodeNames[] = {
     {
         QR_NAMECARD,
             L"名片",
-            10,
+            11,
         {
             L"姓名",L"职务",L"部门",L"公司",L"地址",
-                L"邮编",L"移动电话",L"固定电话",L"传真",L"电子邮件"
+                L"邮编",L"移动电话",L"固定电话",L"传真",L"电子邮件",L"IM"
         }
     },
     {
@@ -670,6 +671,9 @@ void Ui_CaptureWnd::qrcodeAnaysis(const unsigned char* pcode,DWORD nsize,QRCODE_
         if(pdecoded->type == QR_UNKNOWN){
             return;
         }
+        const QRCODE_CONTENT_TAGS_t* 
+            entrytags = qrcodeDecideEntryTagGroup(pdecoded->type);
+        if(entrytags == NULL) return;
         p++;	//略过':'
         do{
             /////get entry tag
@@ -678,35 +682,33 @@ void Ui_CaptureWnd::qrcodeAnaysis(const unsigned char* pcode,DWORD nsize,QRCODE_
                 tag = (tag << 8)&0xffffff00 | *p;
                 p++;
             }
-            const QRCODE_CONTENT_TAGS_t* 
-                entrytags = qrcodeDecideEntryTagGroup(pdecoded->type);
-            if(entrytags == NULL) return;
             int i = 0;
-            while(entrytags[i].tag != QR_ENTRY_UNKNOWN){
+			if(pdecoded->entries[pdecoded->nEntry] == NULL){
+				pdecoded->entries[pdecoded->nEntry] = new QRCODE_ENTRY_t;
+			}
+			while(entrytags[i].type != QR_ENTRY_UNKNOWN){
                 if(tag == entrytags[i].tag){
-                    if(pdecoded->entries[pdecoded->nEntry] == NULL){
-                        pdecoded->entries[pdecoded->nEntry] = new QRCODE_ENTRY_t;
-                    }
                     pdecoded->entries[pdecoded->nEntry]->type = entrytags[i].type;
                     break;
                 }
                 i++;
             }
             /////get entry content
-            if(pdecoded->entries[pdecoded->nEntry]->type != QR_ENTRY_UNKNOWN){
-                unsigned char tmpcontent[MAX_BARCODE_DATA_LEN];
-                DWORD ncontent = 0;
-                p++;	//略过':'
-                while(*p != ';' && p < (pcode + nsize)){	
-                    tmpcontent[ncontent++] = *p;
-                    p++;
-                }
-                tmpcontent[ncontent] = 0;	//字符串结束
-                if(ncontent){
-                    ::chr2wch((const char*)tmpcontent,&pdecoded->entries[pdecoded->nEntry]->content);
-                    pdecoded->nEntry ++;	//Entry数量增加
-                }
-            }
+			//if(pdecoded->entries[pdecoded->nEntry]->type == QR_ENTRY_UNKNOWN) { 
+			//	break; 
+			//}
+			unsigned char tmpcontent[MAX_BARCODE_DATA_LEN];
+			DWORD ncontent = 0;
+			p++;	//略过':'
+			while(*p != ';' && p < (pcode + nsize)){	
+				tmpcontent[ncontent++] = *p;
+				p++;
+			}
+			tmpcontent[ncontent] = 0;	//字符串结束
+			if(ncontent){
+				::chr2wch((const char*)tmpcontent,&pdecoded->entries[pdecoded->nEntry]->content);
+				pdecoded->nEntry ++;	//Entry数量增加
+			}
             p++;	//略过';'
         }while(*p != ';' && p < (pcode + nsize));
     }else{	//纯文本
@@ -802,8 +804,12 @@ void Ui_ResultWnd::setupUi(){
         m_ScrollWin.AddChild(&m_pMultiLineEdit[i]);
 
         m_pEntryTitles[i].SetPos(0,y,GetWidth() - lineWidth - 25,lineHeight);
-        m_pEntryTitles[i].SetText(
-            qrCodeNames[nameidx].enames[m_pqrrecord->entries[i]->type]);
+		if(m_pqrrecord->entries[i]->type == QR_ENTRY_UNKNOWN){
+			m_pEntryTitles[i].SetText(L"未知");
+		}else{
+			m_pEntryTitles[i].SetText(
+				qrCodeNames[nameidx].enames[m_pqrrecord->entries[i]->type]);
+		}
         m_pEntryTitles[i].SetDrawTextFormat(DT_RIGHT | DT_VCENTER);
         m_ScrollWin.AddChild(&m_pEntryTitles[i]);
 

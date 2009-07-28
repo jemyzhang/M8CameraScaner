@@ -27,7 +27,7 @@ struct INTRATOTALBARCODEINFO
 };
 
 
-#define QR_MAX_ENTRIES	10
+#define QR_MAX_ENTRIES	12
 
 typedef enum QR_TYPE {
 	QR_TXT		=	0,		//´¿ÎÄ±¾
@@ -55,6 +55,7 @@ typedef enum QR_ENTRY_TYPE {
 	QR_CARD_TEL			=	7,
 	QR_CARD_FAX			=	8,
 	QR_CARD_EMAIL		=	9,
+	QR_CARD_IM			=	10,
 
 	QR_SMS_RECEIVER		=	0,
 	QR_SMS_CONTENT		=	1,
