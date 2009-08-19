@@ -103,12 +103,9 @@ void Ui_MainWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 	switch (id) {
 		case MZ_IDC_BUTTON_CAPTURE:
 			{
-				::EnterFullScreen(true);
-
 				if(m_pCapture == NULL){
 					m_pCapture = new ui_VideoSurface;//Ui_CaptureWnd;
 				}
-				RotateScreen(SCREEN_ORIENTATION_90);    //∫·∆¡
 				RECT rcWork = MzGetWorkArea();
 				m_pCapture->Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
 				int nRet = m_pCapture->DoModal();
@@ -117,8 +114,6 @@ void Ui_MainWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 				RECT rcRegion = m_pCapture->getCameraRegion();
 				BarCodeType_t type = m_pCapture->getDecodeType();
 
-				RotateScreen(SCREEN_ORIENTATION_0);    //∫·∆¡
-				::EnterFullScreen(false);
 				delete m_pCapture;
 				m_pCapture = NULL;
 

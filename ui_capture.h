@@ -308,7 +308,7 @@ private:	//PtAPI
 	UiScrollWin m_ScrollWin;
 	UiCaption m_Title;
 	UiStatic *m_pEntryTitles;
-	UiMultiLineEdit *m_pMultiLineEdit;
+	UiEdit *m_pMultiLineEdit;
 	UiToolbar_Text m_Toolbar;
 private:
 	BarCodeType_t m_type;

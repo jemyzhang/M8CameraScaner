@@ -787,7 +787,7 @@ void Ui_ResultWnd::setupUi(){
     m_Title.SetText(stitle.C_Str());
 
     m_pEntryTitles = new UiStatic[m_pqrrecord->nEntry];
-    m_pMultiLineEdit = new UiMultiLineEdit[m_pqrrecord->nEntry];
+    m_pMultiLineEdit = new UiEdit[m_pqrrecord->nEntry];
     int y = 0;
     for(int i = 0; i < m_pqrrecord->nEntry; i++){
         m_pMultiLineEdit[i].SetText(
@@ -796,8 +796,9 @@ void Ui_ResultWnd::setupUi(){
         m_pMultiLineEdit[i].SetReadOnly(true);
         m_pMultiLineEdit[i].SetLineSpace(2);
         int lineWidth = GetWidth()*3/4 - 20;
-        int lines = m_pMultiLineEdit[i].GetTextLen() * m_pMultiLineEdit[i].GetTextSize()/lineWidth + 1;
-        int lineHeight = m_pMultiLineEdit[i].getLineHeight() * (lines == 1 ? 2 : lines);
+        //int lines = m_pMultiLineEdit[i].GetTextLen() * m_pMultiLineEdit[i].GetTextSize()/lineWidth + 1;
+        //int lineHeight = m_pMultiLineEdit[i].getLineHeight() * (lines == 1 ? 2 : lines);
+		int lineHeight = m_pMultiLineEdit[i].CalcContentHeight();
         m_pMultiLineEdit[i].SetPos(
             GetWidth() - lineWidth - 20,y,
             lineWidth,lineHeight);

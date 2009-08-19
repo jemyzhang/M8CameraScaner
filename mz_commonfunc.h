@@ -3,6 +3,8 @@
 #include <mzfc_inc.h>
 #include <list>
 
+using namespace std;
+
 typedef enum TextEncode{
 	ttcAnsi, 
 	ttcUnicode, 

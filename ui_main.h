@@ -22,7 +22,7 @@ public:
 	Ui_CaptureWnd *m_pDecode;
 	UiButton m_ButtonCapture;
 	UiButton m_ButtonLoadFile;
-	UiMultiLineEdit m_TextAbout;
+	UiEdit m_TextAbout;
 	UiImage	m_Logo;
 protected:
     // Initialization of the window (dialog)

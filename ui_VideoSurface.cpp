@@ -39,22 +39,22 @@ BOOL ui_VideoSurface::OnInitDialog() {
 
 	this->SetBgColor(RGB(128,128,128));
 
-	int width = GetWidth() - 640;
-	int height = GetHeight()/3;
-	int x = 640;
-	int y = 0;
+	int width = GetWidth()/3;
+	int height = GetHeight() - 600;
+	int x = 0;
+	int y = 600;
 	m_ButtonChangeShape.SetPos(x,y,width,height);
 	m_ButtonChangeShape.SetImage_Normal(pimg[IDB_PNG_SHAPE-IDB_PNG_BEGIN]);
 	m_ButtonChangeShape.SetID(MZ_IDC_BUTTON_SHAPE);
 	AddUiWin(&m_ButtonChangeShape);
 
-	y+=height;
+	x += width;
 	m_ButtonCapture.SetPos(x,y,width,height);
 	m_ButtonCapture.SetImage_Normal(pimg[IDB_PNG_SHOT-IDB_PNG_BEGIN]);
 	m_ButtonCapture.SetID(MZ_IDC_BUTTON_CAPTURE);
 	AddUiWin(&m_ButtonCapture);
 
-	y+=height;
+	x += width;
 	m_ButtonExit.SetPos(x,y,width,height);
 	m_ButtonExit.SetImage_Normal(pimg[IDB_PNG_EXIT-IDB_PNG_BEGIN]);
 	m_ButtonExit.SetID(MZ_IDC_BUTTON_EXIT);
@@ -74,34 +74,6 @@ wchar_t* osdStr[] = {
 	L"L Code Scan "
 };
 void ui_VideoSurface::PaintWin(HDC hdc, RECT* prcUpdate){
-	RotateScreen(SCREEN_ORIENTATION_90);    //保持横屏
-    ::DrawRect(hdc,&m_rcCamera,RGB(128,255,128),RGB(16,0,16));
-    HPEN pen = CreatePen(PS_SOLID, 2,RGB(128,255,128));
-    HPEN oldpen = (HPEN)::SelectObject(hdc,pen);
-    int x1 = m_rcCamera.left + RECT_WIDTH(m_rcCamera)/2 - 15;
-    int y1 = m_rcCamera.top + RECT_HEIGHT(m_rcCamera)/2 - 15;
-    ::MoveToEx(hdc,x1,y1 + 15,NULL);
-    ::LineTo(hdc,x1 + 30, y1 + 15);
-    ::MoveToEx(hdc,x1 + 15,y1,NULL);
-    ::LineTo(hdc,x1 + 15, y1 + 30);
-    //::DrawColorLine(hdc,x1,y1 + 10,x1 + 20, y1 + 10,RGB(128,255,128));
-    //::DrawColorLine(hdc,x1 + 10,y1,x1 + 10, y1 + 20,RGB(128,255,128));
-    ::SelectObject(hdc,oldpen);
-    ::DeleteObject(pen);
-	if(fadeinStep){
-		fadeinStep--;
-		HFONT font = FontHelper::GetFont(42,500,0,0,FONT_ROTATION_FLAG_90);
-		::SelectObject(hdc,font);
-		COLORREF color = RGB(128,128 + 8*fadeinStep,128);
-        RECT rcText = { 10,
-						10,
-						GetHeight() - 10,
-						GetHeight() - 10};
-		::SetBkMode(hdc,TRANSPARENT);
-		::SetTextColor(hdc,color);
-		::DrawText(hdc,osdStr[m_type],lstrlen(osdStr[m_type]),&rcText,DT_LEFT | DT_BOTTOM);
-		::DeleteObject(font);
-	}
 	CMzWndEx::PaintWin(hdc,prcUpdate);
 }
 
@@ -140,8 +112,8 @@ void ui_VideoSurface::OnMzCommand(WPARAM wParam, LPARAM lParam) {
         case MZ_IDC_BUTTON_CAPTURE:
             {
 				if(isInitialized){
-					m_pDevice->PausePreview();
-					m_pDevice->TakePhoto();
+					//m_pDevice->PausePreview();
+					//m_pDevice->TakePhoto();
 					DateTime::waitms(1000);
 					EndModal(ID_OK);
 				}
@@ -167,10 +139,6 @@ void ui_VideoSurface::OnTimer(UINT nIDEvent){
 			break;
 		case 0x1002:
 		{
-			if(fadeinStep > 0){
-				this->Invalidate();
-				this->UpdateWindow();
-			}
 			break;
 		}
 		case 0x1003:
@@ -182,21 +150,114 @@ void ui_VideoSurface::OnTimer(UINT nIDEvent){
 					}
 				}
 			}
+		case 0x1004:
+			{
+            m_pDevice->IsDrawPreviewFrame(false);
+            KillTimer(m_hWnd, 0x1004);
+            HDC previewFrameDC = CreateCompatibleDC(GetDC(m_hWnd));
+            HBITMAP hPreviewFrameBitmap = CreateCompatibleBitmap(GetDC(m_hWnd),480, 640);
+            HGDIOBJ hOldPreviewBmp = SelectObject(previewFrameDC, hPreviewFrameBitmap);
+
+            HDC standByDC = CreateCompatibleDC(GetDC(m_hWnd));
+            HBITMAP hStandByBitmap = CreateCompatibleBitmap(GetDC(m_hWnd),RECT_WIDTH(m_rcCamera), RECT_HEIGHT(m_rcCamera));//640, 480);
+            HGDIOBJ hStandByOldBmp = SelectObject(standByDC, hStandByBitmap);          
+
+			BITMAPINFO* RotatedBitmap = m_pDevice->GetPreviewDataInfo();
+			int widthDest = RotatedBitmap->bmiHeader.biHeight ;
+			int heightDest =  RotatedBitmap->bmiHeader.biWidth ;
+			BYTE    *lpBitmapBitsDest = new BYTE[widthDest*heightDest*2];		//16bits
+			BYTE    *lpBitmapBitsSrc = (BYTE*)m_pDevice->GetPreviewData()->Data;
+			for(int iw = 0; iw < RotatedBitmap->bmiHeader.biWidth; iw++){
+				for(int ih = 0; ih < RotatedBitmap->bmiHeader.biHeight; ih++){
+					int ps = (RotatedBitmap->bmiHeader.biWidth *(ih+1) - (iw+1))*2;
+					int pd = (RotatedBitmap->bmiHeader.biHeight *iw + ih)*2;
+					lpBitmapBitsDest[pd + 0] = lpBitmapBitsSrc[ps + 0];
+					lpBitmapBitsDest[pd + 1] = lpBitmapBitsSrc[ps + 1];
+				}
+			}
+			RotatedBitmap->bmiHeader.biWidth = widthDest;
+			RotatedBitmap->bmiHeader.biHeight = heightDest;
+
+            if(FALSE == StretchDIBits(standByDC, 0, 0, RECT_WIDTH(m_rcCamera), RECT_HEIGHT(m_rcCamera),  m_rcCamera.left,  m_rcCamera.top ,
+              RECT_WIDTH(m_rcCamera), RECT_HEIGHT(m_rcCamera), lpBitmapBitsDest, RotatedBitmap, 
+              DIB_RGB_COLORS, SRCCOPY))
+            {
+              RETAILMSG(1, (TEXT("Stretch DIBits failed...\r\n")));      
+            }
+			RECT rcScreen = { 0,
+								0,
+								GetWidth(),
+								GetHeight()};
+			RECT rcRect = { m_rcCamera.left  - 1,
+								m_rcCamera.top ,
+								m_rcCamera.right + 1,
+								m_rcCamera.bottom + 2 };
+			//绘制底色
+			::DrawRect(previewFrameDC,&rcScreen,RGB(128,128,128),RGB(128,128,128));
+			//绘制边框
+			::DrawRect(previewFrameDC,&rcRect,RGB(128,255,128),RGB(16,0,16));
+			BitBlt(previewFrameDC,  m_rcCamera.left , m_rcCamera.top,  RECT_WIDTH(m_rcCamera), RECT_HEIGHT(m_rcCamera), standByDC, 0, 0, SRCCOPY );
+            //for ( int i = 1; i <= RECT_HEIGHT(m_rcCamera); ++i)
+            //{
+            //  BitBlt(previewFrameDC,  m_rcCamera.left , m_rcCamera.top + i,  RECT_WIDTH(m_rcCamera), 1, standByDC, 0, RECT_HEIGHT(m_rcCamera)-i, SRCCOPY );
+            //}
+
+			//绘制十字
+			HPEN pen = CreatePen(PS_SOLID, 2,RGB(128,255,128));
+			::SelectObject(previewFrameDC,pen);
+			int x1 =  m_rcCamera.left + RECT_WIDTH(m_rcCamera)/2 - 15;
+			int y1 = m_rcCamera.top + RECT_HEIGHT(m_rcCamera)/2 - 15;
+			::MoveToEx(previewFrameDC,x1,y1 + 15,NULL);
+			::LineTo(previewFrameDC,x1 + 30, y1 + 15);
+			::MoveToEx(previewFrameDC,x1 + 15,y1,NULL);
+			::LineTo(previewFrameDC,x1 + 15, y1 + 30);
+			::DeleteObject(pen);
+
+			if(fadeinStep){
+				fadeinStep--;
+				HFONT font = FontHelper::GetFont(42,500);
+				::SelectObject(previewFrameDC,font);
+				COLORREF color = RGB(128,128 + 8*fadeinStep,128);
+				RECT rcText = { 10,
+								10,
+								GetWidth() - 10,
+								m_rcCamera.top  - 10};
+				::SetBkMode(previewFrameDC,TRANSPARENT);
+				::SetTextColor(previewFrameDC,color);
+				::DrawText(previewFrameDC,osdStr[m_type],lstrlen(osdStr[m_type]),&rcText,DT_CENTER | DT_VCENTER);
+				::DeleteObject(font);
+			}
+
+			BitBlt(GetDC(m_hWnd), 0 , 0 ,640,480, previewFrameDC, 0, 0, SRCCOPY );
+
+
+			SelectObject(standByDC, hStandByOldBmp);
+            DeleteObject(hStandByBitmap);
+            DeleteDC(standByDC);
+
+            SelectObject(previewFrameDC, hOldPreviewBmp);
+            DeleteObject(hPreviewFrameBitmap);
+            DeleteDC(previewFrameDC);
+
+            SetTimer(m_hWnd, 0x1004, 200, NULL);
+
+			delete [] lpBitmapBitsDest;
+			}
 	}
 }
 
 void ui_VideoSurface::adjustCameraPos(){
-	RECT rcCameraSquare = {80,(GetHeight() - 240)/2,
-		80 + 240,(GetHeight() - 240)/2 + 240};
-	RECT rcCameraRect = {80,(GetHeight() - 400)/2,
-		80 + 200,(GetHeight() - 400)/2 + 400};
+	RECT rcCameraSquare = {(GetWidth() - 240)/2,(GetHeight() - 240 - 80)/2,
+		(GetWidth() - 240)/2 + 240,(GetHeight() - 240 - 80)/2 + 240};
+	RECT rcCameraRect = {(GetWidth() - 400)/2,(GetHeight() - 200 - 80)/2,
+		(GetWidth() - 400)/2 + 400,(GetHeight() - 200 - 80)/2 + 200};
+
+
 	if(m_type == T_BAR_CODE){
 		m_rcCamera = rcCameraRect;
 	}else{
 		m_rcCamera = rcCameraSquare;
 	}
-	this->Invalidate();
-	this->UpdateWindow();
 }
 
 bool ui_VideoSurface::InitCameraDevice(){
@@ -230,7 +291,6 @@ bool ui_VideoSurface::InitCameraDevice(){
 			m_pDevice->SetBrightness(BRIGHTNESS_LEVEL_6);
 			m_pDevice->IsDrawPreviewFrame(true);
 			m_pDevice->SetMode(MODE_TYPE_AUTO);
-			m_pDevice->SetEffect(EFFECT_TYPE_NORMAL);
 			m_pDevice->SetPhotoName(m_ImageFile);
 			isInitialized = true;
 			m_pDevice->StartPreview();
@@ -241,6 +301,7 @@ bool ui_VideoSurface::InitCameraDevice(){
 	MzEndWaitDlg();
 //	uiRefreshProgressBar(NULL,3,3);
 //	::CoUninitialize();
+	SetTimer(m_hWnd, 0x1004, 200, NULL);
 	return bRet;
 }
 
@@ -255,7 +316,7 @@ bool ui_VideoSurface::ReleaseCameraDevice(){
 			bRet = true;
 			::UnRegisterShellMessage(m_hWnd,WM_MZSH_ENTRY_LOCKPHONE | WM_MZSH_READY_POWEROFF);
 			::UnHoldShellUsingSomeKeyFunction(m_hWnd,MZ_HARDKEY_POWER);
-			::SetScrennAutoOff();
+			::SetScreenAutoOff();
 		}
     }
 	return bRet;
