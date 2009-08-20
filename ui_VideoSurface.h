@@ -58,4 +58,5 @@ private:
 	bool reqInitCamera;
 	UINT fadeinStep;
 	UINT autoEndTime;	//自动退出相机
+	Ui_CaptureWnd *m_pDecode;
 };

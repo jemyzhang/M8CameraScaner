@@ -22,6 +22,7 @@ ui_VideoSurface::ui_VideoSurface(void)
 	reqInitCamera = false;
 	fadeinStep = 0;
 	autoEndTime = 0;
+	m_pDecode = NULL;
 }
 
 ui_VideoSurface::~ui_VideoSurface(void)
@@ -74,6 +75,44 @@ wchar_t* osdStr[] = {
 	L"L Code Scan "
 };
 void ui_VideoSurface::PaintWin(HDC hdc, RECT* prcUpdate){
+	RECT rcScreen = { 0,
+		0,
+		GetWidth(),
+		GetHeight()};
+	RECT rcRect = { m_rcCamera.left  - 1,
+		m_rcCamera.top ,
+		m_rcCamera.right + 1,
+		m_rcCamera.bottom + 2 };
+	//绘制底色
+	::DrawRect(hdc,&rcScreen,RGB(128,128,128),RGB(128,128,128));
+	//绘制边框
+	::DrawRect(hdc,&rcRect,RGB(128,255,128),RGB(16,0,16));
+
+	//绘制十字
+	HPEN pen = CreatePen(PS_SOLID, 2,RGB(128,255,128));
+	::SelectObject(hdc,pen);
+	int x1 =  m_rcCamera.left + RECT_WIDTH(m_rcCamera)/2 - 15;
+	int y1 = m_rcCamera.top + RECT_HEIGHT(m_rcCamera)/2 - 15;
+	::MoveToEx(hdc,x1,y1 + 15,NULL);
+	::LineTo(hdc,x1 + 30, y1 + 15);
+	::MoveToEx(hdc,x1 + 15,y1,NULL);
+	::LineTo(hdc,x1 + 15, y1 + 30);
+	::DeleteObject(pen);
+
+	if(fadeinStep){
+		fadeinStep--;
+		HFONT font = FontHelper::GetFont(42,500);
+		::SelectObject(hdc,font);
+		COLORREF color = RGB(128,128 + 8*fadeinStep,128);
+		RECT rcText = { 10,
+			10,
+			GetWidth() - 10,
+			m_rcCamera.top  - 10};
+		::SetBkMode(hdc,TRANSPARENT);
+		::SetTextColor(hdc,color);
+		::DrawText(hdc,osdStr[m_type],lstrlen(osdStr[m_type]),&rcText,DT_CENTER | DT_VCENTER);
+		::DeleteObject(font);
+	}
 	CMzWndEx::PaintWin(hdc,prcUpdate);
 }
 
@@ -112,10 +151,25 @@ void ui_VideoSurface::OnMzCommand(WPARAM wParam, LPARAM lParam) {
         case MZ_IDC_BUTTON_CAPTURE:
             {
 				if(isInitialized){
-					//m_pDevice->PausePreview();
-					//m_pDevice->TakePhoto();
+					m_pDevice->PausePreview();
+					m_pDevice->TakePhoto();
+					//BITMAPINFO* RotatedBitmap = m_pDevice->GetPreviewDataInfo();
 					DateTime::waitms(1000);
-					EndModal(ID_OK);
+					if(m_pDecode == NULL){
+						m_pDecode = new Ui_CaptureWnd;
+					}
+					RECT m_rcRegion = {m_rcCamera.top,m_rcCamera.left, m_rcCamera.bottom,m_rcCamera.right };
+					m_pDecode->setDecodeSource(DECODE_FROM_CAMERA);
+					m_pDecode->SetScanRegion(m_rcRegion);
+                    m_pDecode->SetDecodeType(m_type);
+					m_pDecode->SetImageFile(m_ImageFile);
+					RECT rcWork = MzGetWorkArea();
+					m_pDecode->Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
+					m_pDecode->DoModal();
+					delete m_pDecode;
+					m_pDecode = NULL;
+					m_pDevice->StartPreview();
+					//EndModal(ID_OK);
 				}
 				break;
             }
@@ -139,6 +193,10 @@ void ui_VideoSurface::OnTimer(UINT nIDEvent){
 			break;
 		case 0x1002:
 		{
+			if(fadeinStep > 0){
+				this->Invalidate();
+				this->UpdateWindow();
+			}
 			break;
 		}
 		case 0x1003:
@@ -149,6 +207,7 @@ void ui_VideoSurface::OnTimer(UINT nIDEvent){
 						EndModal(ID_CANCEL);
 					}
 				}
+				break;
 			}
 		case 0x1004:
 			{
@@ -159,31 +218,41 @@ void ui_VideoSurface::OnTimer(UINT nIDEvent){
             HGDIOBJ hOldPreviewBmp = SelectObject(previewFrameDC, hPreviewFrameBitmap);
 
             HDC standByDC = CreateCompatibleDC(GetDC(m_hWnd));
-            HBITMAP hStandByBitmap = CreateCompatibleBitmap(GetDC(m_hWnd),RECT_WIDTH(m_rcCamera), RECT_HEIGHT(m_rcCamera));//640, 480);
+//            HBITMAP hStandByBitmap = CreateCompatibleBitmap(GetDC(m_hWnd),RECT_WIDTH(m_rcCamera), RECT_HEIGHT(m_rcCamera));
+            HBITMAP hStandByBitmap = CreateCompatibleBitmap(GetDC(m_hWnd),480,640);
             HGDIOBJ hStandByOldBmp = SelectObject(standByDC, hStandByBitmap);          
 
 			BITMAPINFO* RotatedBitmap = m_pDevice->GetPreviewDataInfo();
+			int width = RotatedBitmap->bmiHeader.biWidth;
+			int height = RotatedBitmap->bmiHeader.biHeight;
 			int widthDest = RotatedBitmap->bmiHeader.biHeight ;
 			int heightDest =  RotatedBitmap->bmiHeader.biWidth ;
 			BYTE    *lpBitmapBitsDest = new BYTE[widthDest*heightDest*2];		//16bits
 			BYTE    *lpBitmapBitsSrc = (BYTE*)m_pDevice->GetPreviewData()->Data;
-			for(int iw = 0; iw < RotatedBitmap->bmiHeader.biWidth; iw++){
-				for(int ih = 0; ih < RotatedBitmap->bmiHeader.biHeight; ih++){
-					int ps = (RotatedBitmap->bmiHeader.biWidth *(ih+1) - (iw+1))*2;
-					int pd = (RotatedBitmap->bmiHeader.biHeight *iw + ih)*2;
+			//逆时针翻转原始图像
+			for(int iw = 0; iw < width; iw++){
+				for(int ih = 0; ih < height; ih++){
+					//int ps = (RotatedBitmap->bmiHeader.biWidth *(ih+1) - (iw+1))*2;
+					int ps = (width *(height - ih - 1) + iw)*2;
+					int pd = (height *iw + ih)*2;
 					lpBitmapBitsDest[pd + 0] = lpBitmapBitsSrc[ps + 0];
 					lpBitmapBitsDest[pd + 1] = lpBitmapBitsSrc[ps + 1];
 				}
 			}
 			RotatedBitmap->bmiHeader.biWidth = widthDest;
 			RotatedBitmap->bmiHeader.biHeight = heightDest;
-
-            if(FALSE == StretchDIBits(standByDC, 0, 0, RECT_WIDTH(m_rcCamera), RECT_HEIGHT(m_rcCamera),  m_rcCamera.left,  m_rcCamera.top ,
-              RECT_WIDTH(m_rcCamera), RECT_HEIGHT(m_rcCamera), lpBitmapBitsDest, RotatedBitmap, 
+            if(FALSE == StretchDIBits(standByDC, 0, 0, 480,640,  0, 0, 480,640, lpBitmapBitsDest, RotatedBitmap, 
               DIB_RGB_COLORS, SRCCOPY))
             {
               RETAILMSG(1, (TEXT("Stretch DIBits failed...\r\n")));      
             }
+
+            //if(FALSE == StretchDIBits(standByDC, 0, 0, RECT_WIDTH(m_rcCamera), RECT_HEIGHT(m_rcCamera),  m_rcCamera.left,  m_rcCamera.top ,
+            //  RECT_WIDTH(m_rcCamera), RECT_HEIGHT(m_rcCamera), lpBitmapBitsDest, RotatedBitmap, 
+            //  DIB_RGB_COLORS, SRCCOPY))
+            //{
+            //  RETAILMSG(1, (TEXT("Stretch DIBits failed...\r\n")));      
+            //}
 			RECT rcScreen = { 0,
 								0,
 								GetWidth(),
@@ -295,13 +364,13 @@ bool ui_VideoSurface::InitCameraDevice(){
 			isInitialized = true;
 			m_pDevice->StartPreview();
 			bRet = true;
-			m_pDevice->SetPreviewAreaAlphaValue(12);
+			//m_pDevice->SetPreviewAreaAlphaValue(12);
 		}
 	}
 	MzEndWaitDlg();
 //	uiRefreshProgressBar(NULL,3,3);
 //	::CoUninitialize();
-	SetTimer(m_hWnd, 0x1004, 200, NULL);
+//	SetTimer(m_hWnd, 0x1004, 200, NULL);
 	return bRet;
 }
 

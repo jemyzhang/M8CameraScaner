@@ -790,15 +790,21 @@ void Ui_ResultWnd::setupUi(){
     m_pMultiLineEdit = new UiEdit[m_pqrrecord->nEntry];
     int y = 0;
     for(int i = 0; i < m_pqrrecord->nEntry; i++){
-        m_pMultiLineEdit[i].SetText(
-            m_pqrrecord->entries[i]->content);
         m_pMultiLineEdit[i].SetEditBgType(UI_EDIT_BGTYPE_ROUND_RECT);
         m_pMultiLineEdit[i].SetReadOnly(true);
         m_pMultiLineEdit[i].SetLineSpace(2);
+		//m_pMultiLineEdit[i].SetInitHeight(100);
         int lineWidth = GetWidth()*3/4 - 20;
-        //int lines = m_pMultiLineEdit[i].GetTextLen() * m_pMultiLineEdit[i].GetTextSize()/lineWidth + 1;
-        //int lineHeight = m_pMultiLineEdit[i].getLineHeight() * (lines == 1 ? 2 : lines);
-		int lineHeight = m_pMultiLineEdit[i].CalcContentHeight();
+        //int lines = m_pMultiLineEdit[i].GetCharCount() * m_pMultiLineEdit[i].GetTextSize()/lineWidth + 1;
+        //int lineHeight = m_pMultiLineEdit[i].getch * (lines == 1 ? 2 : lines);
+		//int lineHeight = m_pMultiLineEdit[i].CalcContentHeight();
+        m_pMultiLineEdit[i].SetPos(
+            GetWidth() - lineWidth - 20,y,
+            lineWidth,200);
+        m_pMultiLineEdit[i].SetText(
+            m_pqrrecord->entries[i]->content);
+		int lineHeight = m_pMultiLineEdit[i].CalcContentHeight() +  m_pMultiLineEdit[i].GetTopInvalid() +  m_pMultiLineEdit[i].GetBottomInvalid () +
+			(m_pMultiLineEdit[i].GetRowCount() + 0) * m_pMultiLineEdit[i].GetLingSpace();
         m_pMultiLineEdit[i].SetPos(
             GetWidth() - lineWidth - 20,y,
             lineWidth,lineHeight);
