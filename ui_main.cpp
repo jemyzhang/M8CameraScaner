@@ -70,7 +70,7 @@ BOOL Ui_MainWnd::OnInitDialog() {
 	wsprintf(sa,L"作者: %s",L"JEMYZHANG");
 	sAbout = sa;
 	sAbout = sAbout + L"\n";
-	wsprintf(sa,L"版本: %s Build.%s",L"1.10",L"20090728");
+	wsprintf(sa,L"版本: %s Build.%s",L"0.10pre",L"20090728");
 	sAbout = sAbout + sa;
 	sAbout = sAbout + L"\n";
 	wsprintf(sa,L"如果您愿意，可以向以下支付宝帐号捐赠:\n%s",L"jemyzhang@163.com");

@@ -66,10 +66,6 @@ void Ui_CaptureWnd::ShowBarCodeInfo( PTTOTALBARCODEINFO* pBar ){
     QRCODE_RECORD_t qrcode;
     this->qrcodeAnaysis(m_BarInfo.InfoList[0].Data,m_BarInfo.InfoList[0].dwDataLen,&qrcode);
 
-	//this->m_pDevice->UnInitDevice();
-	//this->m_pDevice->Release();
-	//isInitialized = false;
-	//RotateScreen(SCREEN_ORIENTATION_0); 
     Ui_ResultWnd dlg;
     dlg.setDecodeType(m_bartype);
     dlg.setQRCodeRecord(&qrcode);
@@ -77,8 +73,6 @@ void Ui_CaptureWnd::ShowBarCodeInfo( PTTOTALBARCODEINFO* pBar ){
     RECT rcWork = MzGetWorkArea();
     dlg.Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
     dlg.DoModal();
-	//RotateScreen(SCREEN_ORIENTATION_90);
-	//this->InitCameraDevice();
 
 }
 
@@ -143,7 +137,7 @@ bool Ui_CaptureWnd::PtApiDecoder(HBITMAP hBitmap, int type){
     if(type == 0){ //QR
         PtQRDecodeInit(&CodeInfo);
         if(  PtQRDecodeFromBitmap ( hBitmap, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"An error occured while recognition",2000);
+            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -151,7 +145,7 @@ bool Ui_CaptureWnd::PtApiDecoder(HBITMAP hBitmap, int type){
     }else if(type == 1){	//DM
         PtDMDecodeInit(&CodeInfo);
         if(  PtDMDecodeFromBitmap ( hBitmap, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"An error occured while recognition",2000);
+            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -279,7 +273,6 @@ BOOL Ui_CaptureWnd::OnInitDialog() {
 
 		m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR);
 		m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
-//		m_Toolbar.SetTextBarType(TEXT_TOOLBAR_TYPE_720);
 		m_Toolbar.SetButton(1, true, true, L"解码");
 		m_Toolbar.SetButton(0, true, true, L"返回");
 		AddUiWin(&m_Toolbar);
@@ -364,7 +357,7 @@ bool Ui_CaptureWnd::StartDecode(){
 		wsprintf(errmsg,L"图像数据错误");
 		MzAutoMsgBoxEx(m_hWnd,errmsg,2000);
 	}else if(bdecode == 2){
-		MzAutoMsgBoxEx(m_hWnd,L"图像分析错误，无法找到条码信息",2000);
+		MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
 	}
 	PtFreeImage(&m_image);
 	if(m_source == DECODE_FROM_CAMERA){
@@ -693,10 +686,6 @@ void Ui_CaptureWnd::qrcodeAnaysis(const unsigned char* pcode,DWORD nsize,QRCODE_
                 }
                 i++;
             }
-            /////get entry content
-			//if(pdecoded->entries[pdecoded->nEntry]->type == QR_ENTRY_UNKNOWN) { 
-			//	break; 
-			//}
 			unsigned char tmpcontent[MAX_BARCODE_DATA_LEN];
 			DWORD ncontent = 0;
 			p++;	//略过':'
@@ -748,7 +737,6 @@ BOOL Ui_ResultWnd::OnInitDialog() {
 
     m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR);
     m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
-    //m_Toolbar.SetTextBarType(TEXT_TOOLBAR_TYPE_720);
     m_Toolbar.SetButton(1, true, true, L"OK");
     AddUiWin(&m_Toolbar);
 
@@ -793,11 +781,7 @@ void Ui_ResultWnd::setupUi(){
         m_pMultiLineEdit[i].SetEditBgType(UI_EDIT_BGTYPE_ROUND_RECT);
         m_pMultiLineEdit[i].SetReadOnly(true);
         m_pMultiLineEdit[i].SetLineSpace(2);
-		//m_pMultiLineEdit[i].SetInitHeight(100);
         int lineWidth = GetWidth()*3/4 - 20;
-        //int lines = m_pMultiLineEdit[i].GetCharCount() * m_pMultiLineEdit[i].GetTextSize()/lineWidth + 1;
-        //int lineHeight = m_pMultiLineEdit[i].getch * (lines == 1 ? 2 : lines);
-		//int lineHeight = m_pMultiLineEdit[i].CalcContentHeight();
         m_pMultiLineEdit[i].SetPos(
             GetWidth() - lineWidth - 20,y,
             lineWidth,200);
