@@ -165,10 +165,14 @@ void ui_VideoSurface::OnMzCommand(WPARAM wParam, LPARAM lParam) {
         case MZ_IDC_BUTTON_CAPTURE:
             {
 				if(isInitialized){
+					initUiProgressBar(L"获取图像中...",m_hWnd);
+					uiRefreshProgressBar(L"采集图像",0,2);
 					m_pDevice->PausePreview();
 					m_pDevice->TakePhoto();
+					uiRefreshProgressBar(L"暂存图像",1,2);
 
 					DateTime::waitms(1000);
+					uiRefreshProgressBar(NULL,3,3);
 					if(m_pDecode == NULL){
 						m_pDecode = new Ui_CaptureWnd;
 					}
