@@ -267,14 +267,15 @@ bool ui_VideoSurface::InitCameraDevice(){
 			XGA_PHOTO_SIZE 1024 * 768
 			VGA_PHOTO_SIZE 640 * 480 
 			*/
+			orignalPhotoSize = m_pDevice->GetPhotoSize();
 			m_pDevice->SetPhotoSize(VGA_PHOTO_SIZE);
 			/*        
 			BRIGHTNESS_LEVEL_1 ~ BRIGHTNESS_LEVEL_6
 			*/
 			C::newstrcpy(&m_ImageFile,L"/cap.jpg");
-			m_pDevice->SetBrightness(BRIGHTNESS_LEVEL_6);
+//			m_pDevice->SetBrightness(BRIGHTNESS_LEVEL_6);
 			m_pDevice->IsDrawPreviewFrame(true);
-			m_pDevice->SetMode(MODE_TYPE_AUTO);
+//			m_pDevice->SetMode(MODE_TYPE_AUTO);
 			m_pDevice->SetPhotoName(m_ImageFile);
 			isInitialized = true;
 			m_pDevice->StartPreview();
@@ -294,6 +295,7 @@ bool ui_VideoSurface::ReleaseCameraDevice(){
     if(isInitialized){
 		bRet = false;
 		isInitialized = false;
+		m_pDevice->SetPhotoSize(orignalPhotoSize);
 		if(m_pDevice->UnInitDevice()){
 			m_pDevice->Release();
 	        m_pDevice = NULL;

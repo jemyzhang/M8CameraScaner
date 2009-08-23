@@ -59,4 +59,5 @@ private:
 	UINT fadeinStep;
 	UINT autoEndTime;	//自动退出相机
 	Ui_CaptureWnd *m_pDecode;
+	int orignalPhotoSize;	//原始照片大小
 };
