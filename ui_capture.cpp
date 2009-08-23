@@ -45,7 +45,7 @@ void Ui_CaptureWnd::ShowBarCodeInfo( PTTOTALBARCODEINFO* pBar ){
     uiRefreshProgressBar(L"解码完成",2,3);
     if( pBar->dwTotalCount<=0 )
     {
-        MzAutoMsgBoxEx(m_hWnd,L"No barcodes were found",2000);
+        MzAutoMsgBoxEx(m_hWnd,L"无法找到可用信息",2000);
         return;
     }
 
@@ -89,7 +89,7 @@ bool Ui_CaptureWnd::PtApiDecoder(BarCodeType_t type){
     if(type == T_QR_CODE){ //QR
         PtQRDecodeInit(&CodeInfo);
         if(  PtQRDecode ( &m_image, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"An error occured while recognition",2000);
+            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -97,7 +97,7 @@ bool Ui_CaptureWnd::PtApiDecoder(BarCodeType_t type){
     }else if(type == T_DATAMATRIX_CODE){	//DM
         PtDMDecodeInit(&CodeInfo);
         if(  PtDMDecode ( &m_image, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"An error occured while recognition",2000);
+            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -114,7 +114,7 @@ bool Ui_CaptureWnd::PtApiDecoder(const TCHAR* FileName, int type){
     if(type == 0){ //QR
         PtQRDecodeInit(&CodeInfo);
         if(  PtQRDecodeFromFile ( FileName, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"An error occured while recognition",2000);
+            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -122,7 +122,7 @@ bool Ui_CaptureWnd::PtApiDecoder(const TCHAR* FileName, int type){
     }else if(type == 1){	//DM
         PtDMDecodeInit(&CodeInfo);
         if(  PtDMDecodeFromFile ( FileName, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"An error occured while recognition",2000);
+            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -439,6 +439,7 @@ const QRCODE_TAGS_t qrtags[] = {
     {QR_GIS,        'GIS' },
     {QR_ENC,        'ENC' },
     {QR_URL,        'MARK'},    //'BOOKMARK'
+    {QR_URL,        'BM'},    //'BOOKMARK'
 	{BAR_CODE,		'LBAR'},	//Special
 };
 
@@ -506,103 +507,6 @@ const QRCODE_CONTENT_TAGS_t qrEnctags[] = {
     {QR_ENC_TXT 		    ,'TXT'},
     {QR_ENC_PWD 		    ,'PWD'},
     {QR_ENTRY_UNKNOWN	,0	},
-};
-
-const QRCODE_NAMES_t qrCodeNames[] = {
-    {
-        QR_NAMECARD,
-            L"名片",
-            11,
-        {
-            L"姓名",L"职务",L"部门",L"公司",L"地址",
-                L"邮编",L"移动电话",L"固定电话",L"传真",L"电子邮件",L"IM"
-        }
-    },
-    {
-        QR_SMS,
-            L"短信",
-            2,
-        {
-            L"收信人",L"短信内容"
-        }
-    },
-    {
-        QR_MAIL,
-            L"电子邮件",
-            3,
-        {
-            L"收件人",L"主题",L"正文"
-        }
-    },
-    {
-        QR_URL,
-            L"网址",
-            2,
-        {
-            L"站点名称",L"链接地址"
-        }
-    },
-    {
-        QR_TEXT,
-            L"文本",
-            2,
-        {
-            L"标题",L"内容"
-        }
-    },
-    {
-        QR_TXT,
-            L"普通文本",
-            1,
-        {
-            L"内容"
-        }
-    },
-    {
-        QR_AD,
-            L"链接或电话",
-            3,
-        {
-            L"类型",
-            L"WAP链接",
-            L"呼叫电话"
-        }
-    },
-    {
-        QR_BLOG,
-            L"博客",
-            2,
-        {
-            L"名称",
-            L"链接地址"
-        }
-    },
-    {
-        QR_GIS,
-            L"地图",
-            1,
-        {
-            L"链接地址"
-        }
-    },
-    {
-        QR_ENC,
-            L"加密文字",
-            2,
-        {
-            L"文本",
-            L"密码"
-        }
-    },
-    {
-        BAR_CODE,
-            L"条形码",
-            2,
-        {
-            L"类型",
-            L"序列"
-        }
-    },
 };
 
 const QRCODE_CONTENT_TAGS_t* Ui_CaptureWnd::qrcodeDecideEntryTagGroup(QR_t t){
@@ -707,122 +611,4 @@ void Ui_CaptureWnd::qrcodeAnaysis(const unsigned char* pcode,DWORD nsize,QRCODE_
         pdecoded->entries[0]->type = QR_TXT_TEXT;
         ::chr2wch((const char*)p,&pdecoded->entries[0]->content);
     }
-}
-
-
-//////////////////////////////////////////////
-#define MZ_IDC_SCROLLBAR	102
-
-MZ_IMPLEMENT_DYNAMIC(Ui_ResultWnd)
-Ui_ResultWnd::~Ui_ResultWnd(){
-    if(m_pMultiLineEdit) delete [] m_pMultiLineEdit;
-    if(m_pEntryTitles) delete [] m_pEntryTitles;
-}
-
-BOOL Ui_ResultWnd::OnInitDialog() {
-    // Must all the Init of parent class first!
-
-    if (!CMzWndEx::OnInitDialog()) {
-        return FALSE;
-    }
-    int y = 0;
-    m_Title.SetPos(0,y,GetWidth(),MZM_HEIGHT_CAPTION);
-    AddUiWin(&m_Title);
-
-    y+=MZM_HEIGHT_CAPTION;
-    m_ScrollWin.SetPos(0,y,GetWidth(),GetHeight() - y - MZM_HEIGHT_TEXT_TOOLBAR);
-	m_ScrollWin.SetID(MZ_IDC_SCROLLBAR);
-    m_ScrollWin.EnableScrollBarV(true);
-    AddUiWin(&m_ScrollWin);
-
-    m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR);
-    m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
-    m_Toolbar.SetButton(1, true, true, L"OK");
-    AddUiWin(&m_Toolbar);
-
-    setupUi();
-    return TRUE;
-}
-void Ui_ResultWnd::setupUi(){
-    if(m_type == T_QR_CODE){
-        m_Title.SetText(L"QR Code");
-    }else if(m_type == T_DATAMATRIX_CODE){
-        m_Title.SetText(L"DM Code");
-    }else if(m_type == T_BAR_CODE){
-        m_Title.SetText(L"条形码");
-    }
-    m_Title.Invalidate();
-    m_Title.Update();
-    if(m_pqrrecord == NULL) return;
-    if(m_pqrrecord->nEntry == 0) return;
-    int nameidx = 0;
-    for(int i = 0; i < sizeof(qrCodeNames)/sizeof(qrCodeNames[0]); i++){
-        if(m_pqrrecord->type == qrCodeNames[i].type){
-            nameidx = i;
-            break;
-        }
-    }
-    CMzString stitle;
-    if(m_type == T_QR_CODE){
-        stitle = L"QR Code[";
-    }else if(m_type == T_DATAMATRIX_CODE){
-        stitle = L"DM Code[";
-    }else if(m_type == T_BAR_CODE){
-        stitle = L"条形码[";
-    }
-    stitle = stitle + qrCodeNames[nameidx].tname;
-    stitle = stitle + L"]";
-    m_Title.SetText(stitle.C_Str());
-
-    m_pEntryTitles = new UiStatic[m_pqrrecord->nEntry];
-    m_pMultiLineEdit = new UiEdit[m_pqrrecord->nEntry];
-    int y = 0;
-    for(int i = 0; i < m_pqrrecord->nEntry; i++){
-        m_pMultiLineEdit[i].SetEditBgType(UI_EDIT_BGTYPE_ROUND_RECT);
-        m_pMultiLineEdit[i].SetReadOnly(true);
-        m_pMultiLineEdit[i].SetLineSpace(2);
-        int lineWidth = GetWidth()*3/4 - 20;
-        m_pMultiLineEdit[i].SetPos(
-            GetWidth() - lineWidth - 20,y,
-            lineWidth,200);
-        m_pMultiLineEdit[i].SetText(
-            m_pqrrecord->entries[i]->content);
-		int lineHeight = m_pMultiLineEdit[i].CalcContentHeight() +  m_pMultiLineEdit[i].GetTopInvalid() +  m_pMultiLineEdit[i].GetBottomInvalid () +
-			(m_pMultiLineEdit[i].GetRowCount() + 0) * m_pMultiLineEdit[i].GetLingSpace();
-        m_pMultiLineEdit[i].SetPos(
-            GetWidth() - lineWidth - 20,y,
-            lineWidth,lineHeight);
-        m_ScrollWin.AddChild(&m_pMultiLineEdit[i]);
-
-        m_pEntryTitles[i].SetPos(0,y,GetWidth() - lineWidth - 25,lineHeight);
-		if(m_pqrrecord->entries[i]->type == QR_ENTRY_UNKNOWN){
-			m_pEntryTitles[i].SetText(L"未知");
-		}else{
-			m_pEntryTitles[i].SetText(
-				qrCodeNames[nameidx].enames[m_pqrrecord->entries[i]->type]);
-		}
-        m_pEntryTitles[i].SetDrawTextFormat(DT_RIGHT | DT_VCENTER);
-        m_ScrollWin.AddChild(&m_pEntryTitles[i]);
-
-        y+=lineHeight + 5;
-    }
-}
-
-void Ui_ResultWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
-    UINT_PTR id = LOWORD(wParam);
-    switch (id) {
-        case MZ_IDC_TOOLBAR_MAIN:
-            {
-                int nIndex = lParam;
-                if(nIndex == 1){	//确定
-                    EndModal(ID_OK);
-                    return;
-                }
-            }
-    }
-    CMzWndEx::OnMzCommand(wParam,lParam);
-}
-
-LRESULT Ui_ResultWnd::MzDefWndProc(UINT message, WPARAM wParam, LPARAM lParam) {
-    return CMzWndEx::MzDefWndProc(message, wParam, lParam);
 }

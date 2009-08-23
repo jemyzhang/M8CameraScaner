@@ -230,6 +230,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ui_result.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ui_VideoSurface.cpp"
 				>
 			</File>
@@ -277,6 +281,10 @@
 			</File>
 			<File
 				RelativePath=".\ui_ProgressBar.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ui_result.h"
 				>
 			</File>
 			<File
