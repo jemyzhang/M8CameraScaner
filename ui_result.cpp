@@ -318,7 +318,7 @@ void Ui_ResultWnd::popupMenu(QRCODE_RECORD_ptr pr){
 			break;
 		case CmdSendSms:
 			if(pr->type == QR_SMS){
-#if 0
+#if 1
 				wchar_t* phonenumber = NULL;
 				wchar_t* smscontent = NULL;
 				for(int ie = 0; ie < pr->nEntry; ie++){
@@ -340,7 +340,7 @@ void Ui_ResultWnd::popupMenu(QRCODE_RECORD_ptr pr){
 				PROCESS_INFORMATION pi;
 				CMzString s = L"-n ";
 				s = s + phonenumber;
-				s = s + L" -t ";
+				s = s + L"¨ˆ";
 				s = s + smscontent;
 				CreateProcess(L"\\windows\\sms.exe", 
 					s.C_Str() , NULL, NULL, FALSE, 0, NULL, NULL, NULL, &pi);
@@ -568,6 +568,7 @@ bool Ui_ResultWnd::SaveContact(QRCODE_RECORD_ptr pr){
 	return true;
 }
 
+#if 0
 #include <sms.h>
 #pragma comment(lib,"sms.lib")
 
@@ -626,3 +627,4 @@ bool Ui_ResultWnd::SendSMS(LPCTSTR lpNumber,LPCTSTR lpszMessage)
                 return false;
         }
 } 
+#endif
