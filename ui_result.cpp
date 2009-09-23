@@ -3,6 +3,8 @@
 #include "mz_commonfunc.h"
 using namespace MZ_CommonFunc;
 
+#include "UiFileDialogWnd.h"
+
 //////////////////////////////////////////////
 #define MZ_IDC_SCROLLBAR	102
 #define MZ_IDC_TOOLBAR_MAIN 101
@@ -278,24 +280,33 @@ void Ui_ResultWnd::popupMenu(QRCODE_RECORD_ptr pr){
 			break;
 		case CmdSaveText:
 		{
-			CMzString filename = L"\\Disk\\";
-			filename = filename + this->m_Title.GetText();
+			UiFileDialogWnd dlg;
+			dlg.SetTitle(L"请选择要保存的文件");
+			dlg.SetInitFileSuffix(L".txt");
+			dlg.SetInitFolder(L"\\Disk");
+			CMzString filename = this->m_Title.GetText();
 			filename = filename + L"_";
 			filename = filename + DateTime::NowtoStr();
-			filename = filename + L".txt";
-			FILE* fp;
-			fp = _wfopen(filename,L"wt");
-			if(fp == NULL){
-				MzAutoMsgBoxEx(m_hWnd,L"文件打开失败。");
-				return;
+			dlg.SetInitFileName(filename.C_Str());
+			RECT rcWork = MzGetWorkArea();
+			dlg.Create(rcWork.left, rcWork.top, RECT_WIDTH(rcWork), RECT_HEIGHT(rcWork), m_hWnd, 0, WS_POPUP);
+			int nRet = dlg.DoModal();
+			if(nRet == ID_OK){
+				FILE* fp;
+				filename = dlg.GetFullFileName();
+				fp = _wfopen(filename,L"wt");
+				if(fp == NULL){
+					MzAutoMsgBoxEx(m_hWnd,L"文件打开失败。");
+					return;
+				}
+				for(int i = 0; i < pr->nEntry; i++){
+					fwprintf(fp,L"%s:%s\n",this->m_pEntryTitles[i].GetText().C_Str(),this->m_pMultiLineEdit[i].GetText().C_Str());
+				}
+				fclose(fp);
+				CMzString msg = L"保存至文件";
+				msg = msg + filename;
+				MzAutoMsgBoxEx(m_hWnd, msg.C_Str());
 			}
-			for(int i = 0; i < pr->nEntry; i++){
-				fwprintf(fp,L"%s:%s\n",this->m_pEntryTitles[i].GetText().C_Str(),this->m_pMultiLineEdit[i].GetText().C_Str());
-			}
-			fclose(fp);
-			CMzString msg = L"保存至文件";
-			msg = msg + filename;
-			MzAutoMsgBoxEx(m_hWnd, msg.C_Str());
 		}
 			break;
 		case CmdSaveContact:

@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				ExecutionBucket="7"
 				Optimization="0"
-				PreprocessorDefinitions="_DEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;WINCE;DEBUG;_WINDOWS;$(ARCHFAM);$(_ARCHFAM_);_UNICODE;UNICODE;STANDARDSHELL_UI_MODEL"
+				PreprocessorDefinitions="_DEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;WINCE;DEBUG;_WINDOWS;$(ARCHFAM);$(_ARCHFAM_);_UNICODE;UNICODE;STANDARDSHELL_UI_MODEL;MZFC_STATIC"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions=" /subsystem:windowsce,6.00 /machine:ARM /ARMPADCODE /MACHINE:THUMB "
-				AdditionalDependencies="mzfc.lib PlatformApi.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
+				AdditionalDependencies="mzfcsd.lib PlatformApi.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
 				OutputFile="$(OutDir)/BarCodeScanner.exe"
 				LinkIncremental="2"
 				DelayLoadDLLs="$(NOINHERIT)"
@@ -238,6 +238,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\UiFileDialogWnd.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\UiImage.cpp"
 				>
 			</File>
@@ -289,6 +293,10 @@
 			</File>
 			<File
 				RelativePath=".\ui_VideoSurface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UiFileDialogWnd.h"
 				>
 			</File>
 			<File
