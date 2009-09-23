@@ -9,6 +9,20 @@ using namespace MZ_CommonFunc;
 #include <IFileBrowser.h>
 #include <IFileBrowser_GUID.h>
 
+#ifdef DEBUG
+#define BUILD_CONFIG	L"D"
+#else
+#define BUILD_CONFIG	L"R"
+#endif
+#ifdef MZFC_STATIC
+#define BUILD_METHOD L"s"
+#else
+#define BUILD_METHOD L"d"
+#endif
+#define VER_STRING L"0.22"BUILD_METHOD
+#define BUILD_STRING L"20090923"BUILD_CONFIG
+
+
 #define MZ_IDC_TOOLBAR_MAIN		101
 #define MZ_IDC_BUTTON_CAPTURE	102
 #define MZ_IDC_BUTTON_LOAD		103
@@ -70,7 +84,7 @@ BOOL Ui_MainWnd::OnInitDialog() {
 	wsprintf(sa,L"作者: %s",L"JEMYZHANG");
 	sAbout = sa;
 	sAbout = sAbout + L"\n";
-	wsprintf(sa,L"版本: %s Build.%s",L"0.21pre",L"20090823");
+	wsprintf(sa,L"版本: %s Build.%s",VER_STRING,BUILD_STRING);
 	sAbout = sAbout + sa;
 	sAbout = sAbout + L"\n";
 	wsprintf(sa,L"如果您愿意，可以向以下支付宝帐号捐赠:\n%s",L"jemyzhang@163.com");
