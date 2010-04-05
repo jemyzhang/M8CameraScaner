@@ -19,8 +19,8 @@ using namespace MZ_CommonFunc;
 #else
 #define BUILD_METHOD L"d"
 #endif
-#define VER_STRING L"0.22"BUILD_METHOD
-#define BUILD_STRING L"20090923"BUILD_CONFIG
+#define VER_STRING L"0.23"BUILD_METHOD
+#define BUILD_STRING L"20100405"BUILD_CONFIG
 
 
 #define MZ_IDC_TOOLBAR_MAIN		101
@@ -74,7 +74,7 @@ BOOL Ui_MainWnd::OnInitDialog() {
 	AddUiWin(&m_ButtonLoadFile);
 
 	y+=MZM_WIDTH_DELETE_BUTTON;
-	m_TextAbout.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR - 200, GetWidth(), 200);
+	m_TextAbout.SetPos(0, GetHeight() - MZM_HEIGHT_TOOLBARPRO - 200, GetWidth(), 200);
 	m_TextAbout.SetEnable(false);
 	m_TextAbout.SetTextColor(RGB(128,128,128));
 	m_TextAbout.SetDrawTextFormat(DT_RIGHT);
@@ -87,18 +87,15 @@ BOOL Ui_MainWnd::OnInitDialog() {
 	wsprintf(sa,L"版本: %s Build.%s",VER_STRING,BUILD_STRING);
 	sAbout = sAbout + sa;
 	sAbout = sAbout + L"\n";
-	wsprintf(sa,L"如果您愿意，可以向以下支付宝帐号捐赠:\n%s",L"jemyzhang@163.com");
-	sAbout = sAbout + sa;
-	sAbout = sAbout + L"\n";
-	wsprintf(sa,L"获取更多软件请访问:\n%s",L"http://sites.google.com/site/idaprc/m8-softs");
+	wsprintf(sa,L"支付宝帐号:\n%s",L"jemyzhang@163.com");
 	sAbout = sAbout + sa;
 	m_TextAbout.SetText(sAbout.C_Str());
 	AddUiWin(&m_TextAbout);
 
-	m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR);
+	m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TOOLBARPRO, GetWidth(), MZM_HEIGHT_TOOLBARPRO);
 	m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
 //    m_Toolbar.SetTextBarType(TEXT_TOOLBAR_TYPE_720);
-	m_Toolbar.SetButton(1, true, true, L"退出");
+	m_Toolbar.SetMiddleButton(true, true, L"退出",NULL,NULL,NULL);
 	AddUiWin(&m_Toolbar);
 
 	::RegisterShellMessage(m_hWnd, ::GetShellNotifyMsg_EntryLockPhone() | ::GetShellNotifyMsg_ReadyPowerOFF());
@@ -167,7 +164,7 @@ void Ui_MainWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 		case MZ_IDC_TOOLBAR_MAIN:
 			{
 				int nIndex = lParam;
-				if(nIndex == 1){	//确定
+				if(nIndex == TOOLBARPRO_MIDDLE_TEXTBUTTON){	//确定
 					PostQuitMessage(0);
 					return;
 				}

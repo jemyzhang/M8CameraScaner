@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions=" /subsystem:windowsce,6.00 /machine:ARM /ARMPADCODE /MACHINE:THUMB "
-				AdditionalDependencies="mzfcsd.lib PlatformApi.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
+				AdditionalDependencies="mzfcs.lib PlatformApi.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
 				OutputFile="$(OutDir)/BarCodeScanner.exe"
 				LinkIncremental="2"
 				DelayLoadDLLs="$(NOINHERIT)"
@@ -93,6 +93,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="upx $(TargetPath)"
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
@@ -151,7 +152,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions=" /subsystem:windowsce,6.00"
-				AdditionalDependencies="mzfcs.lib PlatformApi.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
+				AdditionalDependencies="mzfc.lib PlatformApi.lib PtDMDecode.lib PtImageRW.lib PtQRDecode.lib"
 				OutputFile="$(OutDir)/BarCodeScanner.exe"
 				LinkIncremental="1"
 				DelayLoadDLLs="$(NOINHERIT)"
@@ -182,6 +183,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="upx &quot;$(TargetPath)&quot;"
 			/>
 			<DeploymentTool
 				ForceDirty="-1"

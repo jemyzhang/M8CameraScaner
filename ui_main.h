@@ -16,7 +16,7 @@ public:
    	void PaintWin(HDC hdc, RECT* prcUpdate = NULL);
 
 public:
-    UiToolbar_Text m_Toolbar;
+    UiToolBarPro m_Toolbar;
     //Ui_CaptureWnd *m_pCapture;
 	ui_VideoSurface *m_pCapture;
 	Ui_CaptureWnd *m_pDecode;

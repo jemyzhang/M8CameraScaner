@@ -138,7 +138,7 @@ private:
     bool isPaused;
 	RECT m_rcScanRegion;
     RECT m_rcDisplay;
-	UiToolbar_Text m_Toolbar;
+	UiToolBarPro m_Toolbar;
     UiOption m_OptionQR;
     UiOption m_OptionDM;
     UiOption m_OptionBAR;

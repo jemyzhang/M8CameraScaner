@@ -19,6 +19,7 @@ ui_VideoSurface::ui_VideoSurface(void)
 {
 	m_ImageFile = NULL;
 	isInitialized = false;
+    isAFStart = false;
 	m_type = T_QR_CODE;
 	reqInitCamera = false;
 	fadeinStep = 0;
@@ -140,6 +141,7 @@ LRESULT ui_VideoSurface::MzDefWndProc(UINT message, WPARAM wParam, LPARAM lParam
 			if(x > m_rcCamera.left && x < m_rcCamera.right &&
 				y > m_rcCamera.top && y < m_rcCamera.bottom){
 					m_pDevice->StartAF();
+                    isAFStart = true;
 			}
 			resetAutoOff();
 		}
@@ -167,12 +169,24 @@ void ui_VideoSurface::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 				if(isInitialized){
 					initUiProgressBar(L"»ñÈ¡Í¼ÏñÖÐ...",m_hWnd);
 					uiRefreshProgressBar(L"²É¼¯Í¼Ïñ",0,2);
+                    if(!isAFStart){
+                        isAFStart = false;
+                        m_pDevice->StartAF();
+                    }
+                    uint timeretry = 100;
+                    while(!m_pDevice->IsAFEnd() && timeretry){
+                        DateTime::waitms(10);
+                        timeretry--;
+                    }
+                    m_pDevice->StopAF();
 					m_pDevice->PausePreview();
 					m_pDevice->TakePhoto();
 					uiRefreshProgressBar(L"ÔÝ´æÍ¼Ïñ",1,2);
 
 					DateTime::waitms(1000);
 					uiRefreshProgressBar(NULL,3,3);
+                    stopAutoOff();
+                    ReleaseCameraDevice();
 					if(m_pDecode == NULL){
 						m_pDecode = new Ui_CaptureWnd;
 					}
@@ -186,7 +200,10 @@ void ui_VideoSurface::OnMzCommand(WPARAM wParam, LPARAM lParam) {
 					m_pDecode->DoModal();
 					delete m_pDecode;
 					m_pDecode = NULL;
-					m_pDevice->StartPreview();
+                    reqInitCamera = true;
+                    SetTimer(m_hWnd,0x1001,200,NULL);
+					//m_pDevice->StartPreview();
+                    resetAutoOff();
 					//EndModal(ID_OK);
 				}
 				break;
@@ -309,21 +326,20 @@ bool ui_VideoSurface::ReleaseCameraDevice(){
 }
 
 bool ui_VideoSurface::OnShellMessage(UINT message, WPARAM wParam, LPARAM lParam){
-	if(message == ::GetShellNotifyMsg_AllKeyEvent()){
-		resetAutoOff();
-		switch(wParam){
-			case WPARAM_KEY_EVENT_CLICK_POWER:
-			case WPARAM_KEY_EVENT_DBLCLICK_POWER:
-			case WPARAM_KEY_EVENT_LONGCLICK_POWER:
-				if(isInitialized){
-					EndModal(ID_CANCEL);
-					return true;
-				}else{
-					return false;
-				}
-				break;
-		}
-	}
+   /* if(message == ::GetShellNotifyMsg_AllKeyEvent()){
+        resetAutoOff();
+        switch(wParam){
+            case WPARAM_KEY_EVENT_CLICK_POWER:
+            case WPARAM_KEY_EVENT_DBLCLICK_POWER:
+            case WPARAM_KEY_EVENT_LONGCLICK_POWER:
+                if(isInitialized){
+                    EndModal(ID_CANCEL);
+                    return true;
+                }else{
+                    return false;
+                }
+        }
+    }*/
 	if(message == ::GetShellNotifyMsg_EntryLockPhone() || message == ::GetShellNotifyMsg_ReadyPowerOFF()){
 		if(isInitialized){
 			EndModal(ID_CANCEL);

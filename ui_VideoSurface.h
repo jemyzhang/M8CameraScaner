@@ -38,6 +38,9 @@ protected:
 	void resetAutoOff(){
 		autoEndTime = 60;
 	}
+    void stopAutoOff(){
+        autoEndTime = 0;
+    }
 
 	// Initialization of the window (dialog)
     virtual BOOL OnInitDialog();
@@ -53,6 +56,7 @@ private:
 	ICameraDeviceInterface *m_pDevice;
 	wchar_t* m_ImageFile;	//±£´æ½ØÍ¼Â·¾¶
 	bool isInitialized;
+    bool isAFStart;
 	RECT m_rcCamera;
 	BarCodeType_t m_type;
 	bool reqInitCamera;

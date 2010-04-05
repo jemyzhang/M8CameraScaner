@@ -6,16 +6,14 @@ using namespace MZ_CommonFunc;
 
 static bool brangeSet = false;
 static bool bdlgshown = false;
-static MzProgressDialog m_Progressdlg;
+static MzPopupProgress m_Progressdlg;
 static HWND m_hWnd;
 
 void SetProgressBarTitle(LPWSTR t){
 	if(t == NULL){
-		m_Progressdlg.SetShowTitle(false);
 		return;
 	}
-	m_Progressdlg.SetTitle(t);
-	m_Progressdlg.SetShowTitle(true);
+    m_Progressdlg.SetTitleText(t);
 }
 void SetProgressBarRange(WORD rmin, WORD rmax){
 	if(brangeSet) return;
@@ -29,19 +27,18 @@ void SetProgressBarRange(WORD rmin, WORD rmax){
 }
 void ShowProgressBar(){
 	if(!bdlgshown){
-		m_Progressdlg.BeginProgress(m_hWnd);
+		m_Progressdlg.StartProgress(m_hWnd,FALSE);
 		bdlgshown = true;
 	}
 }
 void HideProgressBar(){
-	m_Progressdlg.EndProgress();
+	m_Progressdlg.KillProgress();
 	bdlgshown = false;
 }
 
 void initProgressBar(LPWSTR title = NULL, WORD rmin = 0, WORD rmax = 100){
 	SetProgressBarTitle(title);
 	SetProgressBarRange(rmin,rmax);
-	m_Progressdlg.SetShowInfo(true);
 	brangeSet = false;
 	bdlgshown = false;
 }
@@ -59,8 +56,8 @@ bool uiRefreshProgressBar(wchar_t* info,WORD nCount,WORD nSize){
 	}
 	ShowProgressBar();
 	SetProgressBarRange(0,nSize);
-	m_Progressdlg.SetInfo(info);
-	m_Progressdlg.SetCurValue(nCount+1);
+	m_Progressdlg.SetNoteText(info);
+	m_Progressdlg.SetCurrentValue(nCount+1);
 	m_Progressdlg.UpdateProgress();
 	DateTime::waitms(0);
 	return true;

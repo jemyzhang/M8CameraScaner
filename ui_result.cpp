@@ -8,7 +8,7 @@ using namespace MZ_CommonFunc;
 //////////////////////////////////////////////
 #define MZ_IDC_SCROLLBAR	102
 #define MZ_IDC_TOOLBAR_MAIN 101
-
+#define MZ_IDC_MENU_ACTION 110
 
 const QRCODE_NAMES_t qrCodeNames[] = {
     {
@@ -124,6 +124,7 @@ const QRActionMap_t qrActionMap[] = {
 	{QR_MAIL, CmdSaveText | CmdClipBoard | CmdSendMail},
 	{QR_URL, CmdSaveText | CmdClipBoard | CmdOpenSite},
 	{QR_TEXT, CmdSaveText | CmdClipBoard},
+	{QR_PHONE,CmdSaveText | CmdDialNumber | CmdSendSms | CmdClipBoard},
 };
 
 MZ_IMPLEMENT_DYNAMIC(Ui_ResultWnd)
@@ -139,19 +140,19 @@ BOOL Ui_ResultWnd::OnInitDialog() {
         return FALSE;
     }
     int y = 0;
-    m_Title.SetPos(0,y,GetWidth(),MZM_HEIGHT_CAPTION);
+    m_Title.SetPos(0,y,GetWidth(),MZM_HEIGHT_HEADINGBAR);
     AddUiWin(&m_Title);
 
-    y+=MZM_HEIGHT_CAPTION;
-    m_ScrollWin.SetPos(0,y,GetWidth(),GetHeight() - y - MZM_HEIGHT_TEXT_TOOLBAR);
+    y+=MZM_HEIGHT_HEADINGBAR + 5;
+    m_ScrollWin.SetPos(0,y,GetWidth(),GetHeight() - y - MZM_HEIGHT_TOOLBARPRO);
 	m_ScrollWin.SetID(MZ_IDC_SCROLLBAR);
     m_ScrollWin.EnableScrollBarV(true);
     AddUiWin(&m_ScrollWin);
 
-    m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR);
+    m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TOOLBARPRO, GetWidth(), MZM_HEIGHT_TOOLBARPRO);
     m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
-    m_Toolbar.SetButton(0, true, true, L"返回");
-    m_Toolbar.SetButton(1, true, true, L"操作");
+    m_Toolbar.SetButton(TOOLBARPRO_LEFT_TEXTBUTTON, true, true, L"返回");
+    m_Toolbar.SetMiddleButton(true, true, L"操作",NULL,NULL,NULL);
     AddUiWin(&m_Toolbar);
 
     setupUi();
@@ -192,7 +193,8 @@ void Ui_ResultWnd::setupUi(){
     m_pMultiLineEdit = new UiEdit[m_pqrrecord->nEntry];
     int y = 0;
     for(int i = 0; i < m_pqrrecord->nEntry; i++){
-        m_pMultiLineEdit[i].SetEditBgType(UI_EDIT_BGTYPE_ROUND_RECT);
+        m_pMultiLineEdit[i].SetEditBgType(UI_EDIT_BGTYPE_FILL_WHITE_AND_TOPSHADOW);
+        m_pMultiLineEdit[i].SetTextSize(20);
         m_pMultiLineEdit[i].SetReadOnly(true);
         m_pMultiLineEdit[i].SetLineSpace(2);
         int lineWidth = GetWidth()*3/4 - 20;
@@ -228,19 +230,39 @@ void Ui_ResultWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
         case MZ_IDC_TOOLBAR_MAIN:
             {
                 int nIndex = lParam;
-                if(nIndex == 0){	//返回
+                if(nIndex == TOOLBARPRO_LEFT_TEXTBUTTON){	//返回
+                    if (m_GridMenu.IsContinue()){
+                        m_GridMenu.EndGridMenu();
+                    }
                     EndModal(ID_OK);
                     return;
                 }
-				if(nIndex == 1){
-					popupMenu(m_pqrrecord);
+				if(nIndex == TOOLBARPRO_MIDDLE_TEXTBUTTON){
+                    if (m_GridMenu.IsContinue()){
+                        m_GridMenu.EndGridMenu();
+                    }else{
+                        popupMenu(m_pqrrecord);
+                    }
+                    return;
 				}
             }
     }
+    ProcGridMenu(id);
     CMzWndEx::OnMzCommand(wParam,lParam);
 }
 
 LRESULT Ui_ResultWnd::MzDefWndProc(UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
+        case MZ_WM_WND_ACTIVATE:
+            {
+                if(LOWORD(wParam)==WA_INACTIVE){
+                    if (m_GridMenu.IsContinue()){
+                        m_GridMenu.EndGridMenu();
+                    }
+                }
+                break;
+            }
+    }
     return CMzWndEx::MzDefWndProc(message, wParam, lParam);
 }
 
@@ -253,28 +275,74 @@ void Ui_ResultWnd::popupMenu(QRCODE_RECORD_ptr pr){
 		}
 	}
 
-	CPopupMenu ppm;
-	struct PopupMenuItemProp pmip;
+    ImagingHelper* m_NewImg = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_CONTACT, true);
+    ImagingHelper* m_NewImgPrs = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_CONTACT_PRESSED, true);
 
-	pmip.itemCr = MZC_BUTTON_PELLUCID;
-    pmip.itemRetID = CmdNone;
-    pmip.str = L"取消";
-    ppm.AddItem(pmip);
+    ImagingHelper* m_TxtImg = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_SAVE, true);
+    ImagingHelper* m_TxtImgPrs = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_SAVE_PRESSED, true);
 
+    ImagingHelper* m_DialImg = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_PHONE, true);
+    ImagingHelper* m_DialImgPrs = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_PHONE_PRESSED, true);
+
+    ImagingHelper* m_SmsImg = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_REPLY_NORMAL, true);
+    ImagingHelper* m_SmsImgPrs = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_REPLY_PRESSED, true);
+
+    ImagingHelper* m_SendImg = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_SEND, true);
+    ImagingHelper* m_SendImgPrs = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_SEND_PRESSED, true);
+
+    ImagingHelper* m_SiteImg = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_JUMPTO, true);
+    ImagingHelper* m_SiteImgPrs = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_JUMPTO_PRESSED, true);
+
+    ImagingHelper* m_ClipImg = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_MOVE, true);
+    ImagingHelper* m_ClipImgPrs = 
+        m_imgContainer.LoadImage(GetMzResV2ModuleHandle(), MZRESV2_IDR_PNG_MOVE_PRESSED, true);
+
+    struct QRActionImage {
+        ResultActionCmd_t type;
+        ImagingHelper* img;
+        ImagingHelper* presimg;
+    }actionImage[] = {
+        {CmdSaveContact,m_NewImg,m_NewImgPrs},
+        {CmdSaveText,m_TxtImg,m_TxtImgPrs},
+        {CmdDialNumber,m_DialImg,m_DialImgPrs},
+        {CmdSendSms,m_SmsImg,m_SmsImgPrs},
+        {CmdSendMail,m_SendImg,m_SendImgPrs},
+        {CmdOpenSite,m_SiteImg,m_SiteImgPrs},
+        {CmdClipBoard,m_ClipImg,m_ClipImgPrs},
+    };
+    if(m_GridMenu.IsContinue()){
+        m_GridMenu.EndGridMenu();
+    }
+    m_GridMenu.RemoveAllMenuItem();
 	for(int i = 0 ; i < sizeof(qrActionName)/sizeof(qrActionName[0]); i++){
 		if(actioncode & qrActionName[i].type){
-			pmip.itemCr = MZC_BUTTON_PELLUCID;
-			pmip.itemRetID = qrActionName[i].type;
-			pmip.str = qrActionName[i].name ;
-			ppm.AddItem(pmip);
+            for(int j = 0; j < sizeof(actionImage)/sizeof(actionImage[0]); j++){
+                if(actionImage[j].type == qrActionName[i].type){
+                    m_GridMenu.AppendMenuItem(MZ_IDC_MENU_ACTION + qrActionName[i].type, 
+                        qrActionName[i].name, actionImage[j].img, actionImage[j].presimg);
+                }
+            }
 		}
 	}
+    m_GridMenu.TrackGridMenuDialog(m_hWnd, MZM_HEIGHT_TOOLBARPRO);
+}
 
-	RECT rc = MzGetWorkArea();      
-	rc.top = rc.bottom - ppm.GetHeight();
-	ppm.Create(rc.left,rc.top,RECT_WIDTH(rc),RECT_HEIGHT(rc),m_hWnd,0,WS_POPUP);      
-	int nID = ppm.DoModal();
-
+void Ui_ResultWnd::ProcGridMenu(UINT_PTR id){
+    UINT_PTR nID = id - MZ_IDC_MENU_ACTION;
+    QRCODE_RECORD_ptr pr = m_pqrrecord;
 	switch(nID){
 		case CmdNone:
 			break;
@@ -296,7 +364,7 @@ void Ui_ResultWnd::popupMenu(QRCODE_RECORD_ptr pr){
 				filename = dlg.GetFullFileName();
 				fp = _wfopen(filename,L"wt");
 				if(fp == NULL){
-					MzAutoMsgBoxEx(m_hWnd,L"文件打开失败。");
+					MzMessageAutoBoxV2(m_hWnd,L"文件打开失败。");
 					return;
 				}
 				for(int i = 0; i < pr->nEntry; i++){
@@ -305,15 +373,15 @@ void Ui_ResultWnd::popupMenu(QRCODE_RECORD_ptr pr){
 				fclose(fp);
 				CMzString msg = L"保存至文件";
 				msg = msg + filename;
-				MzAutoMsgBoxEx(m_hWnd, msg.C_Str());
+				MzMessageAutoBoxV2(m_hWnd, msg.C_Str());
 			}
 		}
 			break;
 		case CmdSaveContact:
 			if(SaveContact(pr)){
-				MzAutoMsgBoxEx(m_hWnd, L"联系人保存成功");
+				MzMessageAutoBoxV2(m_hWnd, L"联系人保存成功");
 			}else{
-				MzAutoMsgBoxEx(m_hWnd, L"联系人保存失败");
+				MzMessageAutoBoxV2(m_hWnd, L"联系人保存失败");
 			}
 			break;
 		case CmdDialNumber:
@@ -322,14 +390,13 @@ void Ui_ResultWnd::popupMenu(QRCODE_RECORD_ptr pr){
 					PROCESS_INFORMATION pi;
 					CMzString s = L"-n ";
 					s = s + pr->entries[ie]->content;
-					CreateProcess(L"\\Windows\\Phone.exe", //\\Windows\\DialManager.exe
+					CreateProcess(L"\\Windows\\callui.exe", //\\Windows\\DialManager.exe
 						s.C_Str() , NULL, NULL, FALSE, 0, NULL, NULL, NULL, &pi);
 				}
 			}
 			break;
 		case CmdSendSms:
 			if(pr->type == QR_SMS){
-#if 1
 				wchar_t* phonenumber = NULL;
 				wchar_t* smscontent = NULL;
 				for(int ie = 0; ie < pr->nEntry; ie++){
@@ -341,11 +408,11 @@ void Ui_ResultWnd::popupMenu(QRCODE_RECORD_ptr pr){
 					}
 				}
 				if(phonenumber == NULL){
-					MzAutoMsgBoxEx(m_hWnd, L"错误，联系人电话为空");
+					MzMessageAutoBoxV2(m_hWnd, L"错误，联系人电话为空");
 					return;
 				}
 				if(smscontent == NULL){
-					MzAutoMsgBoxEx(m_hWnd, L"错误，短信内容为空");
+					MzMessageAutoBoxV2(m_hWnd, L"错误，短信内容为空");
 					return;
 				}	
 				PROCESS_INFORMATION pi;
@@ -353,55 +420,22 @@ void Ui_ResultWnd::popupMenu(QRCODE_RECORD_ptr pr){
 				s = s + phonenumber;
 				s = s + L"▓";
 				s = s + smscontent;
-				CreateProcess(L"\\windows\\sms.exe", 
+				CreateProcess(L"\\windows\\smsui.exe", 
 					s.C_Str() , NULL, NULL, FALSE, 0, NULL, NULL, NULL, &pi);
-
-
-#else
-				wchar_t* phonenumber = NULL;
-				wchar_t* smscontent = NULL;
-				for(int ie = 0; ie < pr->nEntry; ie++){
-					if(pr->entries[ie]->type == QR_SMS_RECEIVER && pr->entries[ie]->content != NULL){
-						phonenumber = pr->entries[ie]->content;
-					}
-					if(pr->entries[ie]->type == QR_SMS_CONTENT && pr->entries[ie]->content != NULL){
-						smscontent = pr->entries[ie]->content;
-					}
-				}
-				if(phonenumber == NULL){
-					MzAutoMsgBoxEx(m_hWnd, L"错误，联系人电话为空");
-					return;
-				}
-				if(smscontent == NULL){
-					MzAutoMsgBoxEx(m_hWnd, L"错误，短信内容为空");
-					return;
-				}
-				CMzString fpn = L"+86";
-				fpn = fpn + phonenumber;
-				MzBeginWaitDlg(m_hWnd);
-				bool bret = SendSMS(fpn.C_Str(),smscontent);
-				MzEndWaitDlg();
-				if(bret){
-					MzAutoMsgBoxEx(m_hWnd, L"短信发送成功");
-				}else{
-					MzAutoMsgBoxEx(m_hWnd, L"短信发送失败");
-				}
-#endif
 			}else{
 				for(int ie = 0; ie < pr->nEntry; ie++){
 					if(pr->entries[ie]->type == QR_CARD_MOBILE && pr->entries[ie]->content != NULL){
 						PROCESS_INFORMATION pi;
 						CMzString s = L"-n ";
 						s = s + pr->entries[ie]->content;
-						CreateProcess(L"\\windows\\sms.exe", 
+						CreateProcess(L"\\windows\\smsui.exe", 
 							s.C_Str() , NULL, NULL, FALSE, 0, NULL, NULL, NULL, &pi);
 					}
 				}
 			}
-			//MzAutoMsgBoxEx(m_hWnd, L"功能尚未完成");
 			break;
 		case CmdSendMail:
-			MzAutoMsgBoxEx(m_hWnd, L"功能尚未完成");
+			MzMessageAutoBoxV2(m_hWnd, L"功能尚未完成");
 			break;
 		case CmdOpenSite:
 			for(int ie = 0; ie < pr->nEntry; ie++){
@@ -413,7 +447,7 @@ void Ui_ResultWnd::popupMenu(QRCODE_RECORD_ptr pr){
 			}
 			break;
 		case CmdClipBoard:
-			MzAutoMsgBoxEx(m_hWnd, L"功能尚未完成");
+			MzMessageAutoBoxV2(m_hWnd, L"功能尚未完成");
 			break;
 	}
 }
@@ -498,7 +532,7 @@ bool Ui_ResultWnd::SaveContact(QRCODE_RECORD_ptr pr){
 
 	if(hdDB == INVALID_HANDLE_VALUE)
 	{
-		MzAutoMsgBoxEx(m_hWnd, L"联系人数据库打开失败");
+		MzMessageAutoBoxV2(m_hWnd, L"联系人数据库打开失败");
 		return false;
 	}
 
@@ -561,7 +595,7 @@ bool Ui_ResultWnd::SaveContact(QRCODE_RECORD_ptr pr){
 	CEOID CEoid = CeWriteRecordProps(hdDB,0,cnt,pProps);
 	DWORD ERR = GetLastError();
 	if(0 == CEoid){
-		MzAutoMsgBoxEx(m_hWnd, L"写数据库操作失败!");
+		MzMessageAutoBoxV2(m_hWnd, L"写数据库操作失败!");
 		delete []pProps;
 		return false;
 	}
@@ -569,12 +603,12 @@ bool Ui_ResultWnd::SaveContact(QRCODE_RECORD_ptr pr){
 	//关闭数据库
 	if(! CloseHandle(hdDB))
 	{
-		MzAutoMsgBoxEx(m_hWnd, L"关闭数据库失败");
+		MzMessageAutoBoxV2(m_hWnd, L"关闭数据库失败");
 		return false;
 	}
 	 CeFlushDBVol(&ceguid); 
 	if(!CeUnmountDBVol(&ceguid)){
-		MzAutoMsgBoxEx(m_hWnd, L"数据库刷新失败,重启m8后可看到新加联系人（未解决问题）");
+		MzMessageAutoBoxV2(m_hWnd, L"数据库刷新失败,重启m8后可看到新加联系人（未解决问题）");
 	}
 	return true;
 }

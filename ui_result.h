@@ -17,6 +17,7 @@ typedef enum QR_TYPE {
     QR_GIS      =   8,      //地图
     QR_ENC      =   9,      //加密文字
 	BAR_CODE	=	10,		//1d条形码
+    QR_PHONE    =   11,     //电话号码
 	QR_UNKNOWN	=	0xff,	//未知
 }QR_t;
 
@@ -184,6 +185,7 @@ private:
 	void popupMenu(QRCODE_RECORD_ptr pr);
 	bool SaveContact(QRCODE_RECORD_ptr pr);
 	bool SendSMS(LPCTSTR lpNumber,LPCTSTR lpszMessage);
+    void ProcGridMenu(UINT_PTR id);
 protected:
     // Initialization of the window (dialog)
     virtual BOOL OnInitDialog();
@@ -193,12 +195,25 @@ protected:
 
     // override the MZFC command handler
     virtual void OnMzCommand(WPARAM wParam, LPARAM lParam);
+    // 重载 OnLButtonDown 在点击主窗口时隐藏弹出窗口
+    void OnLButtonDown(UINT fwKeys, int xPos, int yPos)
+    {
+        if (yPos < (GetHeight() - MZM_HEIGHT_TOOLBARPRO))
+        {
+            if (m_GridMenu.IsContinue())
+            {
+                m_GridMenu.EndGridMenu();
+            }
+        }
+    }
 private:	//PtAPI
 	UiScrollWin m_ScrollWin;
-	UiCaption m_Title;
+	UiHeadingBar m_Title;
 	UiStatic *m_pEntryTitles;
 	UiEdit *m_pMultiLineEdit;
-	UiToolbar_Text m_Toolbar;
+	UiToolBarPro m_Toolbar;
+    MzGridMenu m_GridMenu;
+    ImageContainer m_imgContainer;
 private:
 	BarCodeType_t m_type;
 	QRCODE_RECORD_ptr m_pqrrecord;

@@ -21,7 +21,7 @@ public:
 	UiCaption m_DialogTitle;
 	UiSingleLineEdit m_FileName;
 	UiButtonEx m_FolderPath;
-	UiToolbar_Text m_Toolbar;
+	UiToolBarPro m_Toolbar;
 public:
 	void SetTitle(LPCTSTR text);
 	void SetInitFileName(LPCTSTR text);

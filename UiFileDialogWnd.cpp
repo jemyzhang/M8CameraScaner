@@ -44,10 +44,10 @@ BOOL UiFileDialogWnd::OnInitDialog(){
 	m_FolderPath.SetID(MZ_IDC_BUTTON_FOLDER);
 	AddUiWin(&m_FolderPath);
 
-    m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR);
+    m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TOOLBARPRO, GetWidth(), MZM_HEIGHT_TOOLBARPRO);
     m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
-    m_Toolbar.SetButton(0, true, true, L"取消");
-    m_Toolbar.SetButton(2, true, true, L"保存");
+    m_Toolbar.SetButton(TOOLBARPRO_LEFT_TEXTBUTTON, true, true, L"取消");
+    m_Toolbar.SetButton(TOOLBARPRO_RIGHT_TEXTBUTTON, true, true, L"保存");
     AddUiWin(&m_Toolbar);
 
 	m_FileName.SetFocus(true);
@@ -89,11 +89,11 @@ void UiFileDialogWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
         case MZ_IDC_TOOLBAR_MAIN:
             {
                 int nIndex = lParam;
-                if(nIndex == 0){	//返回
+                if(nIndex == TOOLBARPRO_LEFT_TEXTBUTTON){	//返回
                     EndModal(ID_CANCEL);
                     return;
                 }
-				if(nIndex == 2){	//保存
+				if(nIndex == TOOLBARPRO_RIGHT_TEXTBUTTON){	//保存
 					getfileInfo();
 					if(checkFileName()){
 						if(checkFileExist()){

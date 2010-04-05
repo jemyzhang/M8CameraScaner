@@ -45,7 +45,7 @@ void Ui_CaptureWnd::ShowBarCodeInfo( PTTOTALBARCODEINFO* pBar ){
     uiRefreshProgressBar(L"解码完成",2,3);
     if( pBar->dwTotalCount<=0 )
     {
-        MzAutoMsgBoxEx(m_hWnd,L"无法找到可用信息",2000);
+        MzMessageAutoBoxV2(m_hWnd,L"无法找到可用信息");
         return;
     }
 
@@ -89,7 +89,7 @@ bool Ui_CaptureWnd::PtApiDecoder(BarCodeType_t type){
     if(type == T_QR_CODE){ //QR
         PtQRDecodeInit(&CodeInfo);
         if(  PtQRDecode ( &m_image, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
+            MzMessageAutoBoxV2(m_hWnd,L"图像识别错误，无法找到可用信息");
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -97,7 +97,7 @@ bool Ui_CaptureWnd::PtApiDecoder(BarCodeType_t type){
     }else if(type == T_DATAMATRIX_CODE){	//DM
         PtDMDecodeInit(&CodeInfo);
         if(  PtDMDecode ( &m_image, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
+            MzMessageAutoBoxV2(m_hWnd,L"图像识别错误，无法找到可用信息");
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -114,7 +114,7 @@ bool Ui_CaptureWnd::PtApiDecoder(const TCHAR* FileName, int type){
     if(type == 0){ //QR
         PtQRDecodeInit(&CodeInfo);
         if(  PtQRDecodeFromFile ( FileName, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
+            MzMessageAutoBoxV2(m_hWnd,L"图像识别错误，无法找到可用信息");
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -122,7 +122,7 @@ bool Ui_CaptureWnd::PtApiDecoder(const TCHAR* FileName, int type){
     }else if(type == 1){	//DM
         PtDMDecodeInit(&CodeInfo);
         if(  PtDMDecodeFromFile ( FileName, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
+            MzMessageAutoBoxV2(m_hWnd,L"图像识别错误，无法找到可用信息");
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -137,7 +137,7 @@ bool Ui_CaptureWnd::PtApiDecoder(HBITMAP hBitmap, int type){
     if(type == 0){ //QR
         PtQRDecodeInit(&CodeInfo);
         if(  PtQRDecodeFromBitmap ( hBitmap, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
+            MzMessageAutoBoxV2(m_hWnd,L"图像识别错误，无法找到可用信息");
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -145,7 +145,7 @@ bool Ui_CaptureWnd::PtApiDecoder(HBITMAP hBitmap, int type){
     }else if(type == 1){	//DM
         PtDMDecodeInit(&CodeInfo);
         if(  PtDMDecodeFromBitmap ( hBitmap, &m_para, &CodeInfo ) != PT_QRDECODE_SUCCESS ){
-            MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
+            MzMessageAutoBoxV2(m_hWnd,L"图像识别错误，无法找到可用信息");
         }else{
             ShowBarCodeInfo( &CodeInfo );
         }
@@ -253,28 +253,28 @@ BOOL Ui_CaptureWnd::OnInitDialog() {
         return FALSE;
     }
 	if(m_source == DECODE_FROM_FILE){
-		m_OptionQR.SetPos(5,GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR - MZM_HEIGHT_SINGLELINE_EDIT,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
+		m_OptionQR.SetPos(5,GetHeight() - MZM_HEIGHT_TOOLBARPRO - MZM_HEIGHT_SINGLELINE_EDIT,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
 		m_OptionQR.SetStatus(true);
 		m_OptionQR.SetText(L"QR CODE");
 		m_OptionQR.SetID(MZ_IDC_OPTION_QR);
 		AddUiWin(&m_OptionQR);
 
-		m_OptionDM.SetPos(5,GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR - MZM_HEIGHT_SINGLELINE_EDIT*2,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
+		m_OptionDM.SetPos(5,GetHeight() - MZM_HEIGHT_TOOLBARPRO - MZM_HEIGHT_SINGLELINE_EDIT*2,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
 		m_OptionDM.SetStatus(false);
 		m_OptionDM.SetText(L"DM CODE");
 		m_OptionDM.SetID(MZ_IDC_OPTION_DM);
 		AddUiWin(&m_OptionDM);
 
-		m_OptionBAR.SetPos(5,GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR - MZM_HEIGHT_SINGLELINE_EDIT*3,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
+		m_OptionBAR.SetPos(5,GetHeight() - MZM_HEIGHT_TOOLBARPRO - MZM_HEIGHT_SINGLELINE_EDIT*3,GetWidth()/3,MZM_HEIGHT_SINGLELINE_EDIT);
 		m_OptionBAR.SetStatus(false);
 		m_OptionBAR.SetText(L"BAR CODE");
 		m_OptionBAR.SetID(MZ_IDC_OPTION_BAR);
 		AddUiWin(&m_OptionBAR);
 
-		m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TEXT_TOOLBAR, GetWidth(), MZM_HEIGHT_TEXT_TOOLBAR);
+		m_Toolbar.SetPos(0, GetHeight() - MZM_HEIGHT_TOOLBARPRO, GetWidth(), MZM_HEIGHT_TOOLBARPRO);
 		m_Toolbar.SetID(MZ_IDC_TOOLBAR_MAIN);
-		m_Toolbar.SetButton(1, true, true, L"解码");
-		m_Toolbar.SetButton(0, true, true, L"返回");
+		m_Toolbar.SetMiddleButton(true, true, L"解码",NULL,NULL,NULL);
+		m_Toolbar.SetButton(TOOLBARPRO_LEFT_TEXTBUTTON, true, true, L"返回");
 		AddUiWin(&m_Toolbar);
 	}else{
 		SetTimer(m_hWnd,0x1001,100,NULL);
@@ -353,11 +353,9 @@ bool Ui_CaptureWnd::StartDecode(){
 	}
 	uiRefreshProgressBar(NULL,3,3);
 	if(bdecode == 1){
-		wchar_t errmsg[128];
-		wsprintf(errmsg,L"图像数据错误");
-		MzAutoMsgBoxEx(m_hWnd,errmsg,2000);
+		MzMessageAutoBoxV2(m_hWnd,L"图像数据错误");
 	}else if(bdecode == 2){
-		MzAutoMsgBoxEx(m_hWnd,L"图像识别错误，无法找到可用信息",2000);
+		MzMessageAutoBoxV2(m_hWnd,L"图像识别错误，无法找到可用信息");
 	}
 	PtFreeImage(&m_image);
 	if(m_source == DECODE_FROM_CAMERA){
@@ -405,10 +403,10 @@ void Ui_CaptureWnd::OnMzCommand(WPARAM wParam, LPARAM lParam) {
         case MZ_IDC_TOOLBAR_MAIN:
 			{
 				int nIndex = lParam;
-				if(nIndex == 0){
+				if(nIndex == TOOLBARPRO_LEFT_TEXTBUTTON){
 					EndModal(ID_CANCEL);
 				}
-				if(nIndex == 1){
+				if(nIndex == TOOLBARPRO_MIDDLE_TEXTBUTTON){
 					StartDecode();
 				}
 				break;
@@ -441,6 +439,14 @@ const QRCODE_TAGS_t qrtags[] = {
     {QR_URL,        'MARK'},    //'BOOKMARK'
     {QR_URL,        'BM'},    //'BOOKMARK'
 	{BAR_CODE,		'LBAR'},	//Special
+    {QR_PHONE,     'HONE'},
+};
+
+const QRCODE_CONTENT_TAGS_t qrPhonetags[] = {
+    {QR_CARD_NAME		,'SUB'},
+    {QR_CARD_TEL		,'TEL'},
+    {QR_CARD_MOBILE		,'M'},
+    {QR_ENTRY_UNKNOWN	,0	},
 };
 
 const QRCODE_CONTENT_TAGS_t qrBartags[] = {
@@ -542,6 +548,9 @@ const QRCODE_CONTENT_TAGS_t* Ui_CaptureWnd::qrcodeDecideEntryTagGroup(QR_t t){
 			case BAR_CODE:
 				entrytags = qrBartags;
 				break;
+            case QR_PHONE:
+                entrytags = qrPhonetags;
+                break;
     }
     return entrytags;
 }
